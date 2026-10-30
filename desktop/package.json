@@ -1,0 +1,8 @@
+{
+  "name": "mahjong-tournament",
+  "version": "1.0.0",
+  "description": "麻将赛事管理",
+  "main": "main.js",
+  "author": "mahjong-tournament",
+  "license": "MIT"
+}

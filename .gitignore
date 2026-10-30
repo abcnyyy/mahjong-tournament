@@ -1,0 +1,17 @@
+# 构建产物（体积大，不进仓库）
+dist/exe/
+build/
+node_modules/
+
+# 本地密钥与临时文件
+android/mtt.keystore
+*.log
+*.tmp
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 与主文件完全相同的旧副本
+好奇杯赛事管理系统_UI优化版.html

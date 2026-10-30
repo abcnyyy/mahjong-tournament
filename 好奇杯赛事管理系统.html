@@ -1,0 +1,3768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好奇杯赛事管理系统（赛管专用·截图分享版）</title>
+<style>
+/* =================================================================
+   好奇杯赛事管理系统 · UI 重构版样式 v2（纯视觉重构，功能/结构不变）
+   调性：暖沙底 + 墨青顶栏 + 琥珀金主操作 —— 赛事「记分牌」质感
+   ================================================================= */
+:root{
+  --bg:#f6f2e9;                 /* 暖沙背景 */
+  --card:#fffdf9;
+  --card-border:#e7dfd0;
+  --ink:#24303a;
+  --ink-2:#68737d;
+  --navy:#10333f;               /* 墨青 */
+  --navy-l:#1a4757;
+  --gold:#e8a33d;               /* 琥珀金 */
+  --gold-d:#cf8524;
+  --teal:#2f8f78;               /* 晋级绿 */
+  --teal-d:#247a66;
+  --red:#d9554d;
+  --blue:#3d7ea8;
+  --line:#ece4d4;
+  --radius:14px;
+  --shadow:0 1px 0 rgba(16,51,63,.03),0 6px 22px rgba(56,42,10,.08);
+  --shadow-lift:0 2px 4px rgba(16,51,63,.06),0 16px 40px rgba(56,42,10,.14);
+  --font:'Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;background-image:radial-gradient(circle at 50% -20%,rgba(232,163,61,.10),transparent 60%)}
+
+/* ================= 顶栏 ================= */
+header.topbar{background:linear-gradient(140deg,var(--navy-l),var(--navy) 55%,#0b2732);color:#eaf4f5;
+  position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:12px;padding:12px 22px;flex-wrap:wrap;
+  box-shadow:0 3px 14px rgba(16,51,63,.35);border-bottom:3px solid var(--gold)}
+header.topbar .brand{font-size:19px;font-weight:800;letter-spacing:1px;color:#fff;white-space:nowrap;
+  display:flex;align-items:center;gap:9px;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+header.topbar .brand::before{content:"🏆";font-size:18px}
+header.topbar .brand::after{content:"赛管专用 · 截图分享版";font-size:11px;font-weight:400;letter-spacing:.3px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#bfd8dc;padding:2px 9px;border-radius:20px}
+header.topbar .nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+header.topbar .nav button{background:transparent;color:#b9d3d8;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;
+  font-size:14px;transition:background .15s,color .15s}
+header.topbar .nav button:hover{background:rgba(255,255,255,.10);color:#fff}
+header.topbar .nav button.active{background:var(--gold);color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(232,163,61,.5)}
+
+/* ================= 布局与卡片 ================= */
+.container{max-width:1120px;margin:0 auto;padding:26px 20px 80px}
+.card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:20px 24px;margin-bottom:20px;transition:box-shadow .2s,border-color .2s}
+.card:hover{box-shadow:var(--shadow-lift);border-color:#dbcfba}
+h2{border-left:4px solid var(--gold);padding:2px 0 10px 14px;margin:6px 0 16px;font-size:21px;font-weight:800;
+  color:#17323c;letter-spacing:.5px;line-height:1.35;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  border-bottom:1px dashed var(--line)}
+h2 .tag{font-size:12px}
+h3{margin:18px 0 10px;font-size:15px;font-weight:700;color:#2a4650;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+h3:before{content:"";width:6px;height:6px;border-radius:2px;background:var(--gold);display:inline-block}
+
+/* ================= 按钮 ================= */
+button{background:linear-gradient(180deg,#4a8db8,#3a7aa4);color:#fff;border:none;border-radius:10px;padding:9px 17px;
+  cursor:pointer;font-size:14px;margin:3px;font-family:inherit;font-weight:500;
+  transition:filter .15s,box-shadow .15s,transform .06s;box-shadow:0 1px 0 rgba(0,0,0,.12),0 2px 6px rgba(30,70,110,.18)}
+button:hover{filter:brightness(1.08);box-shadow:0 4px 14px rgba(30,70,110,.25)}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:3px solid rgba(232,163,61,.5);outline-offset:2px}
+button.green{background:linear-gradient(180deg,var(--teal),var(--teal-d))}
+button.green:hover{box-shadow:0 4px 14px rgba(47,143,120,.35)}
+button.red{background:linear-gradient(180deg,#e0675f,var(--red))}
+button.gray{background:linear-gradient(180deg,#8f9aa3,#7a878f)}
+button.orange{background:linear-gradient(180deg,var(--gold),var(--gold-d))}
+button.orange:hover{box-shadow:0 4px 14px rgba(232,163,61,.45)}
+button.small{padding:6px 13px;font-size:13px;border-radius:8px}
+button.mini{padding:3px 9px;font-size:12px;border-radius:7px}
+button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.3);transform:none;box-shadow:none}
+
+/* ================= 工具条与提示 ================= */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0;row-gap:8px}
+.hint{background:linear-gradient(90deg,#fdf3e2,#fcf6ea);border:1px solid #efd9b4;border-left:5px solid var(--gold);
+  color:#7a5214;padding:12px 16px;border-radius:10px;margin:14px 0;font-size:14px;line-height:1.7}
+.hint b{color:#5c3d0e}
+.muted{color:var(--ink-2);font-size:13px}
+.flex-table{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ================= 表格 ================= */
+table{width:100%;border-collapse:collapse;background:#fff;margin:12px 0;font-size:14px;border:1px solid var(--line);
+  border-radius:10px;overflow:hidden}
+th{background:#1b3b47;color:#eaf3f4;font-size:13px;font-weight:600;padding:9px 8px;border-right:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid #16313c;white-space:nowrap;letter-spacing:.3px}
+th:last-child{border-right:none}
+td{border-bottom:1px solid #f0e9da;border-right:1px solid #f5efe1;padding:8px 7px;text-align:center;vertical-align:middle;color:#2b3741}
+td:last-child{border-right:none}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:#fffdf7}
+tbody tr:hover{background:#fdf6e8}
+td input.mini{width:64px;text-align:center;border:1px solid #d6cbb4;border-radius:6px;padding:4px;font-size:13px;background:#fff;transition:border-color .15s,box-shadow .15s}
+td input.mini:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(232,163,61,.2)}
+select{border:1px solid #d6cbb4;border-radius:6px;padding:3px 7px;font-size:13px;background:#fff;color:var(--ink)}
+select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,163,61,.18)}
+tr.promote td{background:#e0f3e9}
+tr.withdrawn td{background:#fbe5e2;color:#a5322d}
+tr.disqualified td{background:#fdeece;text-decoration:line-through}
+tr.wdrow td{background:#fdf1df}
+tbody tr.promote:hover td{background:#d2ecdf}
+tbody tr.withdrawn:hover td{background:#f8d8d4}
+/* ---- 表格装饰增强 ---- */
+table thead tr th:first-child{border-radius:10px 0 0 0}
+table thead tr th:last-child{border-radius:0 10px 0 0}
+/* 表头微渐变/分割线增 */
+tbody tr td{transition:background .1s}
+tbody tr:hover td{background:#f9f2df}
+tbody tr.promote td{background:#dbf2e3}tbody tr.promote:hover td{background:#cdead6}
+tbody tr.withdrawn td{background:#f6d6d3}tbody tr.withdrawn:hover td{background:#f2cac6}
+tbody tr.disqualified td{background:#fdeece;text-decoration:line-through}
+tbody tr.disqualified:hover td{background:#fbe5b0}
+/* 对阵表：座位行间 */
+.match-sheet tbody tr:nth-child(even):not(.withdrawn):not(.disqualified){background:#fafafc}
+/* kbd/分数格拟物边框 */
+table td input.mini{box-shadow:inset 0 1px 3px rgba(0,0,0,.04)}
+table td input.mini:focus{box-shadow:0 0 0 3px rgba(232,163,61,.18),inset 0 1px 4px rgba(0,0,0,.06)}
+/* 桌号粗体增强 */
+table td.tnum{color:#14212a}
+/* 输入框在焦点时蓝色高亮 */
+input:focus,select:focus,textarea:focus{transition:box-shadow .18s,borer-color .18s}
+
+
+/* ================= 标签 ================= */
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;margin:1px 3px;white-space:nowrap;font-weight:600;line-height:1.5;vertical-align:1px;border:1px solid transparent}
+.tag.ongoing{background:#dcebf5;color:#1c5f86;border-color:#c3dfef}
+.tag.done{background:#e6e2d8;color:#6a5f4c}
+.tag.champ{background:#fbe7c4;color:#9a6a12;border-color:#f2d392}
+.tag.invite{background:#dcebf5;color:#1c5f86}
+.tag.three{background:#f2e9c2;color:#7c650f}
+.tag.dq{background:#f8d5d2;color:#a5322d}
+.tag.wd{background:#fde3cf;color:#c05a16}
+.tag.sub{background:#e3e0fb;color:#433f9c}
+
+/* ================= 对阵表 ================= */
+table.match-sheet{width:auto;min-width:100%}
+table.match-sheet th{background:#eef0f9;color:#33405a;font-weight:700;border-color:#e3e7f3}
+table.match-sheet th:first-child{width:60px;text-align:center}
+table.match-sheet td.tnum{font-weight:800;color:#1f3a46;white-space:nowrap}
+td.seat-cell{padding:9px 12px;white-space:nowrap}
+.seat-name{font-weight:800;margin-right:9px;color:#1c3440}
+.seat-line{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.seat-line.playoff{margin-top:6px;background:#f6f3ea;border:1px dashed #d5c8a8;border-radius:7px;padding:4px 7px}
+
+/* ================= 步骤条 ================= */
+.stepbar{display:flex;margin:6px 0 18px;flex-wrap:wrap;align-items:center;gap:6px;
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 2px 6px rgba(56,42,10,.04)}
+.stepbar .st{position:relative;flex:1;min-width:110px;padding:10px 8px;border-radius:10px;background:#f1efe8;color:#7a858d;
+  cursor:pointer;font-size:14px;border:none;font-family:inherit;text-align:center;margin:0;transition:all .15s;font-weight:500}
+.stepbar .st:hover{background:#e8e5da;color:#3c4a55}
+.stepbar .st.active{background:linear-gradient(180deg,var(--gold),var(--gold-d));color:#fff;font-weight:800;
+  box-shadow:0 4px 14px rgba(232,163,61,.5)}
+.stepbar .st.done:not(.active){background:#e3efe9;color:#237b63}
+
+/* ================= 表单 ================= */
+textarea{width:100%;min-height:120px;border:1px solid #d6cbb4;border-radius:10px;padding:12px;font-size:14px;
+  font-family:inherit;resize:vertical;background:#fff;transition:border-color .15s,box-shadow .15s}
+textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,163,61,.18)}
+
+/* ================= 弹窗 ================= */
+#modalRoot{position:fixed;inset:0;z-index:999;pointer-events:none}
+.modal-mask{position:absolute;inset:0;background:rgba(16,40,50,.55);display:flex;align-items:center;justify-content:center;
+  pointer-events:auto;animation:maskIn .16s ease;backdrop-filter:blur(2px)}
+@keyframes maskIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--card);border-radius:16px;padding:24px;max-width:520px;width:92%;max-height:86vh;overflow:auto;
+  box-shadow:0 22px 70px rgba(10,25,32,.5);border-top:4px solid var(--gold);animation:pop .18s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-msg{font-size:15px;margin-bottom:18px;white-space:pre-wrap;word-break:break-all;line-height:1.7}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.modal-box input[type=text],.modal-box input[type=number]{width:100%;border:1px solid #d6cbb4;border-radius:9px;
+  padding:10px 12px;font-size:15px;margin-top:12px;font-family:inherit;background:#fff}
+.modal-box input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,163,61,.18)}
+
+/* ================= 明细 / 晋级表 ================= */
+table.sub-tbl{margin:6px 0;font-size:13px}
+table.sub-tbl th{font-size:12px;padding:5px;background:#f0f3f9;color:#33405a}
+table.sub-tbl td{padding:5px;font-size:13px}
+.adv-table td{text-align:left}
+
+/* ================= 错误框 ================= */
+.danger-box{background:#fbe6e4;border:1px solid #efc4c0;color:#9e322c;padding:14px;border-radius:10px;
+  margin:12px 0;font-family:Consolas,'Courier New',monospace;font-size:13px;white-space:pre-wrap;word-break:break-all}
+
+/* ================= 打印 / 导出 ================= */
+#printArea{display:none}
+/* 导出预览层：导出后把内容直接铺在屏幕上，用户能看到要打印什么，
+   并从一次真实点击触发打印（部分浏览器会拦截非用户手势的 window.print()）。 */
+body.print-preview #printArea{display:block;position:fixed;left:0;top:0;right:0;bottom:0;overflow:auto;
+  background:#fff;z-index:9000;padding:14px 18px 90px}
+body.print-preview #printArea table{max-width:1120px;margin-left:auto;margin-right:auto}
+body.print-preview{overflow:hidden}
+#printBar{position:fixed;right:18px;bottom:18px;z-index:9001;display:flex;align-items:center;gap:8px;
+  background:#fff;border:1px solid #e2c988;border-radius:12px;padding:8px 10px;box-shadow:0 6px 20px rgba(16,51,63,.18)}
+.page-break{page-break-before:always;break-before:page}
+@media print{
+  body>*{display:none!important}
+  #printArea{display:block!important}
+  body.print-preview #printArea{position:static!important;left:auto!important;top:auto!important;right:auto!important;
+    bottom:auto!important;overflow:visible!important;padding:0!important;z-index:auto!important}
+  #printBar{display:none!important}
+  #printArea .bracket-wrap{page-break-inside:avoid}
+  #printArea .bracket-wrap>div{gap:18px!important}
+  body{background:#fff}
+  #printArea h1{font-size:20px;margin:8px 0;color:#10333f;border-bottom:2px solid var(--gold);padding-bottom:6px}
+  #printArea h2{font-size:16px;border-left:4px solid var(--gold);padding-left:8px;margin:12px 0 6px;color:#10333f}
+  #printArea h3{font-size:14px;margin:10px 0 4px;color:#2a4650}
+  #printArea table{font-size:11px;margin:6px 0}
+  #printArea th,#printArea td{padding:4px 5px}
+  #printArea th{background:#1b3b47!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .match-sheet th{background:#eef0f9!important;color:#33405a!important;-webkit-print-color-adjust:exact}
+  #printArea tr.promote td{background:#dcfce7!important;-webkit-print-color-adjust:exact}
+  #printArea tr.wdrow td{background:#fdf1df!important;-webkit-print-color-adjust:exact}
+  #printArea .tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .wd{background:#fee2e2!important;color:#b91c1c!important;-webkit-print-color-adjust:exact}
+  #printArea .dq{background:#fdeece!important;text-decoration:line-through!important;-webkit-print-color-adjust:exact}
+  /* 关键：滚动容器（overflow:auto/hidden）在打印时不会被分页，内容超出一页即被裁掉。
+     必须放开 overflow，否则排名表只会打印出第一页的选手、右侧列也会被切掉。 */
+  #printArea .flex-table{overflow:visible!important;-webkit-overflow-scrolling:auto}
+  #printArea table{overflow:visible!important;border-radius:0!important;page-break-inside:auto;break-inside:auto}
+  #printArea tr{page-break-inside:avoid;break-inside:avoid}
+  #printArea thead{display:table-header-group}
+  /* 跨页时每页重复表头，否则第 2 页起没有列名 */
+  #printArea thead{display:table-header-group}
+  /* 排名类表：首列是名次数字，不该占 132px；昵称列给足宽度便于阅读 */
+  #printArea table.rank-tbl th:first-child,#printArea table.rank-tbl td:first-child{width:auto!important;min-width:0!important;max-width:110px!important}
+  #printArea table.rank-tbl th:nth-child(2),#printArea table.rank-tbl td:nth-child(2){min-width:88px}
+}
+
+/* ================= 预览模式 ================= */
+body.preview-mode .no-print{display:none!important}
+body.preview-mode .container{max-width:414px;padding:16px}
+body.preview-mode{background:#fff}
+body.preview-mode .card{border:none;box-shadow:none;background:#fff}
+
+.tbl-cap{margin:14px 0 -6px;padding:5px 12px;font-size:13px;font-weight:800;color:#7a4a0e;background:linear-gradient(90deg,#fbeecb,#fdf6e4);
+  border:1px solid #ecd9a8;border-radius:8px;letter-spacing:1px;display:inline-block}
+.tbl-cap + .flex-table{margin-top:8px}
+.empty-seat{color:#cfc6b2}
+td input.mini,td input{background:#fffdf5;border-width:1.5px;border-color:#cdbd99}
+tbody tr:hover td{background:#fdf3dd}
+/* ---- 统一格子长度：名字列固定区宽(超长折行)，其余格最小等宽，录入与导出一致 ---- */
+table:not(.match-sheet) th:first-child,table:not(.match-sheet) td:first-child{width:132px!important;min-width:132px!important;max-width:132px!important;word-break:break-all}
+td:not(:first-child){min-width:52px}
+/* 对阵表：固定布局，桌号窄列 + 座位格等宽均分（3/4 人桌都占 4 格）*/
+table.match-sheet{table-layout:fixed;width:100%}
+.match-sheet th:first-child,.match-sheet td:first-child{width:58px!important;min-width:58px!important;max-width:58px!important;white-space:normal;word-break:break-all}
+.match-sheet th:not(:first-child),.match-sheet td:not(:first-child){word-break:break-all}
+.match-sheet td{min-width:0!important}
+/* ---- 桌分隔更醒目（录入页）---- */
+.tbl-cap{display:block;margin:20px 0 -6px;padding:7px 16px;font-size:13px;font-weight:800;color:#6b4308;
+  background:linear-gradient(90deg,#f3dc9e,#fdf6e0);border:1px solid #e2c682;border-radius:10px;letter-spacing:2px;
+  box-shadow:0 1px 0 rgba(120,90,20,.06)}
+.tbl-cap + .flex-table{margin-top:10px}
+.tbl-cap + .flex-table table{border:2px solid #e2c988}
+.tbl-cap + .flex-table td{border-bottom-color:#efe4c8}
+/* ================= 无障碍 & 响应式 ================= */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+@media (max-width:760px){
+  .container{padding:16px 12px 70px}
+  header.topbar .brand{flex-wrap:wrap;gap:6px}
+  header.topbar .brand::after{display:none}
+  .card{padding:15px 14px}
+  .stepbar .st{min-width:auto;flex:1 1 30%}
+  .modal-box{width:96%}
+}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🏆 好奇杯赛事管理系统</div>
+  <div class="nav">
+    <button id="nav-welcome" onclick="navTo('welcome')">使用说明</button>
+    <button id="nav-tournaments" onclick="navTo('tournaments')">赛事列表</button>
+    <button id="nav-current" onclick="navTo('current')">当前赛事</button>
+    <button id="nav-scoreboard" onclick="navTo('scoreboard')">积分榜</button>
+  </div>
+</header>
+<div class="container" id="app"></div>
+<div id="modalRoot"></div>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+<input type="file" id="csvFile" accept=".csv,text/csv" style="display:none">
+<div id="printBar" class="no-print" style="display:none">
+  <span id="printHint" style="font-size:12px;color:#6b7280">没弹出对话框就按 Ctrl+P</span>
+  <button class="green" onclick="printNow()">🖨 打印 / 另存为 PDF</button>
+  <button class="gray" onclick="closePrintPreview()">✕ 关闭</button>
+</div>
+<div id="printArea"></div>
+<script>
+/* ==== 模块0：常量与全局 ==== */
+var STORAGE_KEY='curious_cup_data';
+var CONFIG={
+  QUALIFY_ROUNDS_SMALL:3,QUALIFY_ROUNDS_LARGE:4,QUALIFY_MATCHES_PER_ROUND:2,
+  ELIM_MATCHES_PER_ROUND:3,ELIM_ADVANCE_PER_TABLE:2,PROMOTE_TO_ELIM:16,
+  ROLLING_SEASONS:4,INVITE_TOP_N:16,EXTRA_BONUS_FIRST:15,
+  P_CHAMPION:100,P_RUNNER_UP:80,P_THIRD:65,P_FOURTH:50,
+  P_SEMI_3RD:40,P_SEMI_4TH:30,P_R16_3RD:20,P_R16_4TH:10,
+  P_QUAL_MAX:50,P_QUAL_MIN:10,P_QUAL_SLOPE:40,
+  EXTRA_BONUS_TIE2:7.5,EXTRA_BONUS_TIE3:5,EXTRA_BONUS_TIE4:0,
+  SNAKE_16_8:[[1,16,9,8],[2,15,10,7],[3,14,11,6],[4,13,12,5]],
+  SNAKE_8_4:[[1,8,5,4],[2,7,6,3]],
+  SNAKE_4_FINAL:[[1,4,3,2]]
+};
+var DATA=loadData();
+var APP={view:DATA.seenWelcome?'tournaments':'welcome',tid:null,step:'pool',expandedPlayer:null,
+         importMode:'merge',ppTab:'entry',ppQualRank:false,ppResult:false,ppBoard:false,ppPool:false,
+         viewQualRound:0,viewElimRound:0};
+var BOARD_NAMES=[];
+
+/* ==== 模块1：数据加载/保存/修复 ==== */
+function uid(){return 'id_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+function fmt(n){if(n==null||isNaN(n))return '0';var v=Math.round(n*100)/100;return String(v).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'');}
+function pad(n){return n<10?'0'+n:''+n;}
+function getT(id){return DATA.tournaments.find(function(t){return t.id===id;})||null;}
+function curT(){return APP.tid?getT(APP.tid):null;}
+function getP(t,pid){return t.players.find(function(p){return p.id===pid;})||null;}
+function playerName(t,pid){var p=getP(t,pid);return p?p.name:'(未知)';}
+function activePlayers(t){return t.players.filter(function(p){return !p.withdrawn&&!p.disqualified;});}
+function defaultQualDetail(p){return {scores:[0,0],ranks:[0,0],special:0,topBonus:0,topBonusManual:null,penalty:0,late:0,absent:0};}
+function defaultElimDetail(p){return {scores:[0,0,0],ranks:[0,0,0],special:0,penalty:0,late:0,absent:0,playoffRank:null,playoffScore:null};}
+function loadData(){
+  var d=null;
+  try{ d=JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ d=null; }
+  return fixData(d);
+}
+function saveData(){ try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(DATA)); }catch(e){ console.error('保存失败',e); } }
+function fixData(d){
+  if(!d||typeof d!=='object')d={version:1,seenWelcome:false,tournaments:[]};
+  if(!Array.isArray(d.tournaments))d.tournaments=[];
+  d.version=d.version||1;
+  d.seenWelcome=!!d.seenWelcome;
+  d.tournaments.forEach(fixTournament);
+  return d;
+}
+function fixTournament(t){
+  t.id=t.id||uid();t.name=t.name||'未命名赛事';t.createdAt=t.createdAt||Date.now();
+  t.status=t.status==='done'?'done':'ongoing';
+  if(!Array.isArray(t.players))t.players=[];
+  t.players.forEach(function(p){
+    p.id=p.id||uid();p.name=p.name||'未命名';
+    p.withdrawn=!!p.withdrawn;p.disqualified=!!p.disqualified;
+    if(p.elimReached===undefined)p.elimReached=null;
+    if(p.elimPlayed===undefined)p.elimPlayed=null;
+    if(p.source===undefined)p.source='qualifier';
+    if(p.playerUid===undefined)p.playerUid='';
+  });
+  var q=t.qualifier=t.qualifier||{};
+  q.rounds=Array.isArray(q.rounds)?q.rounds:[];
+  q.rounds.forEach(function(r){
+    r.roundNo=r.roundNo||1;r.confirmed=!!r.confirmed;if(r.fixed===undefined)r.fixed=null;
+    if(!Array.isArray(r.tables))r.tables=[];
+    r.tables.forEach(function(tb){
+      if(!Array.isArray(tb.players))tb.players=[];
+      tb.detail=tb.detail||{};
+      tb.players.forEach(function(pid){
+        var d=tb.detail[pid];
+        if(!d){tb.detail[pid]=defaultQualDetail(getP(t,pid));return;}
+        if(!Array.isArray(d.scores))d.scores=[0,0];
+        if(!Array.isArray(d.ranks))d.ranks=[0,0];
+        if(d.special===undefined)d.special=0;
+        if(d.topBonus===undefined)d.topBonus=0;
+        if(d.topBonusManual===undefined)d.topBonusManual=null;
+        if(d.penalty===undefined)d.penalty=0;
+        d.late=num(d.late)||0;d.absent=num(d.absent)||0;
+      });
+    });
+  });
+  if(q.finalRanking===undefined)q.finalRanking=null;
+  if(q.manualRanking===undefined)q.manualRanking=null;
+  if(q.promoted===undefined)q.promoted=null;
+  if(q.notPromoted===undefined)q.notPromoted=null;
+  if(q.rankConfirmed===undefined)q.rankConfirmed=null;
+  if(q.qualified===undefined)q.qualified=null;
+  if(!t.elimination)t.elimination=null;
+  else{
+    var e=t.elimination;
+    e.rounds=Array.isArray(e.rounds)?e.rounds:[];
+    e.rounds.forEach(function(r){
+      r.roundNo=r.roundNo||1;r.confirmed=!!r.confirmed;
+      r.pool=Array.isArray(r.pool)?r.pool:[];
+      r.advanced=Array.isArray(r.advanced)?r.advanced:[];
+      if(!Array.isArray(r.tables))r.tables=[];
+      r.tables.forEach(function(tb){
+        if(!Array.isArray(tb.players))tb.players=[];
+        tb.detail=tb.detail||{};
+        tb.players.forEach(function(pid){
+          var d=tb.detail[pid];
+          if(!d){tb.detail[pid]=defaultElimDetail(getP(t,pid));return;}
+          if(!Array.isArray(d.scores))d.scores=[0,0,0];
+          if(!Array.isArray(d.ranks))d.ranks=[0,0,0];
+          if(d.special===undefined)d.special=0;
+          if(d.penalty===undefined)d.penalty=0;
+          d.late=num(d.late)||0;d.absent=num(d.absent)||0;
+          if(d.playoffRank===undefined)d.playoffRank=null;
+          if(d.playoffScore===undefined)d.playoffScore=null;
+        });
+      });
+    });
+    if(e.finalRanking===undefined)e.finalRanking=null;
+    if(e.manualFinal===undefined)e.manualFinal=null;
+  }
+  t.pointOverrides=t.pointOverrides||{};
+  if(t.qualifier)t.qualifier.corrections=t.qualifier.corrections||{};
+}
+
+/* ==== 模块2：弹窗系统（禁止原生 alert/confirm/prompt）==== */
+function modalRoot(){return document.getElementById('modalRoot');}
+function openModal(html,onClose){
+  var root=modalRoot();
+  root.innerHTML='<div class="modal-mask">'+html+'</div>';
+  root._onClose=onClose||null;
+  root._promptEl=null;
+  var mask=root.firstElementChild;
+  if(mask){mask.addEventListener('click',function(e){if(e.target===mask&&!window._modalSticky)closeModal();});}
+  var inp=root.querySelector&&root.querySelector('input');
+  if(inp){root._promptEl=inp;setTimeout(function(){try{inp.focus();}catch(e){}},10);}
+}
+function closeModal(){
+  var root=modalRoot();
+  root.innerHTML='';
+  var cb=root._onClose;root._onClose=null;root._onYes=null;
+  root._promptEl=null;
+  if(cb)cb();
+}
+function modalConfirm(){
+  var root=modalRoot();
+  var cb=root._onYes;root._onYes=null;
+  var pe=root._promptEl;
+  root._onClose=null;
+  root.innerHTML='';
+  root._promptEl=pe;   // 保留输入框引用：确认回调需在 DOM 移除后仍能读取用户输入
+  if(cb)cb();
+}
+function uiAlert(msg,cb){
+  openModal('<div class="modal-box"><div class="modal-msg">'+esc(msg)+'</div>'+
+    '<div class="modal-actions"><button class="green" onclick="closeModal()">确定</button></div></div>',cb);
+}
+function uiConfirm(msg,onYes){
+  var root=modalRoot();
+  root._onYes=onYes;
+  openModal('<div class="modal-box"><div class="modal-msg">'+esc(msg)+'</div>'+
+    '<div class="modal-actions"><button class="gray" onclick="closeModal()">取消</button>'+
+    '<button class="red" onclick="modalConfirm()">确定</button></div></div>');
+}
+function uiPrompt(msg,def,onOk){
+  var root=modalRoot();
+  root._onYes=function(){
+    var root2=modalRoot();
+    var v=root2._promptEl||document.getElementById('promptInput');
+    onOk(v?v.value:'');
+  };
+  openModal('<div class="modal-box"><div class="modal-msg">'+esc(msg)+'</div>'+
+    '<input type="text" id="promptInput" value="'+esc(def||'')+'" onkeydown="if(event.key===\'Enter\')modalConfirm()">'+
+    '<div class="modal-actions"><button class="gray" onclick="closeModal()">取消</button>'+
+    '<button class="green" onclick="modalConfirm()">确定</button></div></div>');
+}
+/* ==== 模块3：渲染框架与导航 ==== */
+function render(){
+  try{
+    updateNav();
+    var app=document.getElementById('app');
+    if(APP.view==='welcome')app.innerHTML=viewWelcome();
+    else if(APP.view==='tournaments')app.innerHTML=viewTournaments();
+    else if(APP.view==='current')app.innerHTML=viewCurrent();
+    else if(APP.view==='scoreboard')app.innerHTML=viewScoreboard();
+    else app.innerHTML=viewWelcome();
+  }catch(e){
+    var app=document.getElementById('app');
+    app.innerHTML='<div class="danger-box">页面渲染出错：'+esc(e&&e.message?e.message:e)+'\n'+(e&&e.stack?esc(String(e.stack)):'')+'</div>';
+  }
+}
+function updateNav(){
+  var map={welcome:'nav-welcome',tournaments:'nav-tournaments',current:'nav-current',scoreboard:'nav-scoreboard'};
+  for(var k in map){
+    var el=document.getElementById(map[k]);
+    if(el)el.classList.toggle('active',APP.view===k);
+  }
+}
+function navTo(v){
+  if(v==='current'&&!APP.tid){APP.view='tournaments';}
+  else APP.view=v;
+  render();
+}
+function goStep(s){APP.step=s;render();}
+function startUse(){DATA.seenWelcome=true;saveData();APP.view='tournaments';render();}
+function togglePreview(key){
+  APP[key]=!APP[key];
+  var on=APP.ppPool||APP.ppQualRank||APP.ppResult||APP.ppBoard;
+  var b=document.body;
+  if(b&&b.classList)b.classList.toggle('preview-mode',on);
+  render();
+}
+function viewWelcome(){
+  return '<div class="card"><h2>欢迎使用好奇杯赛事管理系统</h2>'+
+    '<p>本系统用于管理好奇杯麻将赛事全流程：选手池 → 晋级赛 → 淘汰赛 → 最终排名 → 积分榜。</p>'+
+    '<div class="hint"><b>使用流程：</b><br>① 在「赛事列表」新建赛事、批量加入选手；<br>③ 在「晋级赛」随机分桌、逐轮录入半庄成绩，确认排名生成 16 强晋级名单；<br>④ 在「淘汰赛」完成 16 进8 → 8进4 → 决赛，生成最终 1-16 名排名；<br>⑤ 完成赛事后成绩自动回流积分榜，滚动最近 '+CONFIG.ROLLING_SEASONS+' 届，前 '+CONFIG.INVITE_TOP_N+' 名 + 上届 16 强获得直邀资格。</div>'+
+    '<div class="toolbar"><button class="green" onclick="startUse()">开始使用</button></div></div>';
+}
+
+/* ==== 模块4：赛事列表 ==== */
+function viewTournaments(){
+  var list=DATA.tournaments.slice().reverse();
+  var h='<div class="card"><div class="hint" style="margin:0 0 14px;font-size:13px">⚡ 所有数据存储在浏览器本地，建议定期导出备份。一键导出：列表上方「⬇ 导出全部数据」</div><h2>赛事列表</h2>';
+  h+='<div class="toolbar no-print">';
+  h+='<button class="green" onclick="newTournament()">+ 新建赛事</button>';
+  h+='<button onclick="exportAll()">⬇ 导出全部数据</button>';
+  h+='<button onclick="document.getElementById(\'importFile\').click()">⬆ 导入JSON恢复</button>';
+  h+='<span class="muted">导入模式：</span><select onchange="APP.importMode=this.value"><option value="merge" '+(APP.importMode==='merge'?'selected':'')+'>合并</option><option value="overwrite" '+(APP.importMode==='overwrite'?'selected':'')+'>覆盖</option></select>';
+  h+='</div>';
+  if(!list.length)h+='<p class="muted">还没有赛事，点击「+ 新建赛事」开始。</p>';
+  for(var i=0;i<list.length;i++){
+    var t=list[i];
+    var done=t.status==='done';
+    var hasRank=!!(t.elimination&&t.elimination.finalRanking&&t.elimination.finalRanking.length);
+    h+='<div class="card">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+    h+='<div><b>'+esc(t.name)+'</b> <span class="muted">'+new Date(t.createdAt).toLocaleString('zh-CN')+'</span></div>';
+    h+='<div><span class="tag '+(done?'done':'ongoing')+'">'+(done?'已完成':'进行中')+'</span>'+(hasRank?' <span class="tag done">已出排名</span>':'')+'</div>';
+    h+='</div>';
+    h+='<div class="muted">参赛 '+t.players.length+' 人</div>';
+    h+='<div class="toolbar no-print">';
+    h+='<button class="green" onclick="openTournament(\''+t.id+'\')">进入</button>';
+    h+='<button class="'+(done?'orange':'gray')+'" onclick="toggleStatus(\''+t.id+'\')">'+(done?'重新开启':'标记完成')+'</button>';
+    h+='<button class="red" onclick="deleteTournament(\''+t.id+'\')">删除</button>';
+    h+='</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+function newTournament(){
+  uiPrompt('请输入赛事名称','好奇杯第'+(DATA.tournaments.length+1)+'届',function(name){
+    name=(name||'').trim();
+    if(!name){uiAlert('赛事名称不能为空');return;}
+    var t={id:uid(),name:name,createdAt:Date.now(),status:'ongoing',players:[],
+      qualifier:{rounds:[],finalRanking:null,manualRanking:null,promoted:null,notPromoted:null,rankConfirmed:null,qualified:null},
+      elimination:null,pointOverrides:{}};
+    DATA.tournaments.push(t);
+    saveData();render();
+    uiAlert('赛事「'+name+'」已创建，点击「进入」开始添加选手。');
+  });
+}
+function openTournament(id){APP.tid=id;APP.view='current';APP.step='pool';render();}
+function toggleStatus(id){
+  var t=getT(id);if(!t)return;
+  if(t.status==='done'){t.status='ongoing';saveData();render();uiAlert('赛事已重新开启。');}
+  else uiConfirm('标记赛事「'+t.name+'」为已完成？（完成后成绩计入积分榜）',function(){
+    t.status='done';saveData();render();uiAlert('赛事已完成，成绩已计入积分榜。');
+  });
+}
+function deleteTournament(id){
+  var t=getT(id);if(!t)return;
+  uiConfirm('确定删除赛事「'+t.name+'」？建议操作前先⬇ 导出全部数据备份！此操作不可恢复！',function(){
+    DATA.tournaments=DATA.tournaments.filter(function(x){return x.id!==id;});
+    if(APP.tid===id)APP.tid=null;
+    saveData();render();
+  });
+}
+function downloadText(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||'text/plain'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){try{URL.revokeObjectURL(a.href);}catch(e){}},1000);
+  }catch(e){uiAlert('导出失败：'+e.message);}
+}
+function exportAll(){
+  var d=JSON.parse(JSON.stringify(DATA));
+  d.exportedAt=new Date().toLocaleString('zh-CN');
+  var ts=new Date();
+  var name='好奇杯数据_'+ts.getFullYear()+pad(ts.getMonth()+1)+pad(ts.getDate())+'_'+pad(ts.getHours())+pad(ts.getMinutes())+pad(ts.getSeconds())+'.json';
+  downloadText(name,JSON.stringify(d,null,2),'application/json');
+}
+function doImport(){
+  var f=document.getElementById('importFile');
+  if(!f||!f.files||!f.files[0])return;
+  var file=f.files[0];
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var d=fixData(JSON.parse(reader.result));
+      if(APP.importMode==='overwrite'){DATA=d;}
+      else{
+        var ids={};
+        DATA.tournaments.forEach(function(t){ids[t.id]=true;});
+        d.tournaments.forEach(function(t){if(!ids[t.id])DATA.tournaments.push(t);});
+      }
+      DATA=fixData(DATA);
+      saveData();render();
+      uiAlert('导入成功（'+(APP.importMode==='overwrite'?'覆盖':'合并')+'模式），当前共 '+DATA.tournaments.length+' 届赛事。');
+    }catch(e){uiAlert('导入失败：'+(e&&e.message?e.message:e));}
+    f.value='';
+  };
+  reader.readAsText(file);
+}
+
+/* ==== 模块12：牌谱 CSV 导入（雀魂赛事后台导出）===== */
+var CSV_HALF_GAP_MS=3*3600*1000;              // 同桌相邻两局超过 3 小时 → 判为不同轮次，交人工
+var CSV_CPU_RE=/^(电脑|ＣＰＵ|CPU|AI|机器人|小铃)\s*\d*$/i;
+var _csvKind=null,_csvPlan=null;
+
+/* RFC4180 风格解析：支持引号包裹、引号内逗号/换行、CRLF */
+function csvParse(text){
+  var rows=[],row=[],cell='',q=false,i=0,c;
+  text=String(text).replace(/^\uFEFF/,'');
+  for(;i<text.length;i++){
+    c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; }
+      else cell+=c;
+    }else{
+      if(c==='"')q=true;
+      else if(c===','){row.push(cell);cell='';}
+      else if(c==='\n'){row.push(cell);rows.push(row);row=[];cell='';}
+      else if(c==='\r'){/*跳过*/}
+      else cell+=c;
+    }
+  }
+  if(cell!==''||row.length){row.push(cell);rows.push(row);}
+  return rows.filter(function(r){return r.some(function(x){return String(x).trim()!=='';});});
+}
+
+/* "[国际中文][54137877]qrk415" → {uid:'54137877',name:'qrk415'} */
+function csvPlayer(cell){
+  var raw=String(cell==null?'':cell).trim();
+  var m=/^\[[^\]]*\]\[(\d+)\]([\s\S]*)$/.exec(raw);
+  if(m)return {uid:m[1],name:(m[2]||'').trim()||raw,raw:raw};
+  return {uid:'',name:raw,raw:raw};
+}
+function csvIsCpu(pl){return pl.uid==='0'||CSV_CPU_RE.test(pl.name);}
+
+/* 选手名册匹配：UID 优先，昵称兜底；歧义即失败 */
+function csvMatchPlayer(t,pl){
+  var byUid=null,byName=[];
+  t.players.forEach(function(p){
+    if(pl.uid&&p.playerUid&&String(p.playerUid)===pl.uid)byUid=p;
+    if(p.name===pl.name)byName.push(p);
+  });
+  if(byUid)return {pid:byUid.id};
+  if(byName.length===1)return {pid:byName[0].id};
+  if(byName.length>1)return {err:'昵称「'+pl.name+'」在名册中有 '+byName.length+' 人，无法确定'};
+  return {err:'名册中找不到 '+(pl.uid?'UID '+pl.uid+' / ':'')+pl.name};
+}
+
+function csvTargetRound(t,kind){
+  var box=kind==='qual'?t.qualifier:(t.elimination||null);
+  if(!box||!box.rounds||!box.rounds.length)return null;
+  var r=null;
+  box.rounds.forEach(function(x){if(!x.confirmed)r=x;});
+  return r;
+}
+
+/* 干跑：只算不写。返回 {items(自动定位), manual(需人工指定), skips(无法处理), roundNo, kind} */
+function csvPlan(t,kind,text){
+  var items=[],manual=[],skips=[],rows=csvParse(text);
+  var r=csvTargetRound(t,kind);
+  if(!r)return {items:items,manual:manual,skips:[{row:0,reason:'没有未确认的轮次可供录入'}],roundNo:null,kind:kind};
+  if(rows.length<2)return {items:items,manual:manual,skips:[{row:0,reason:'文件里没有数据行'}],roundNo:r.roundNo,kind:kind};
+  var head=rows[0];
+  var need=['1位玩家','1位分数','1位终局点数'];
+  if(need.some(function(k){return head.indexOf(k)<0;}))
+    return {items:items,manual:manual,skips:[{row:1,reason:'表头不是雀魂牌谱格式（缺 1位玩家/1位分数/1位终局点数）'}],roundNo:r.roundNo,kind:kind};
+
+  var P=[3,6,9,12],SC=[5,8,11,14];
+  var parsed=[];
+  for(var i=1;i<rows.length;i++){
+    var rowNo=i+1,row=rows[i];
+    if(String(row[2]||'').trim().toLowerCase()==='yes'){skips.push({row:rowNo,reason:'牌谱已被移除'});continue;}
+    var humans=[],bad=null,cpu=0;
+    for(var j=0;j<4;j++){
+      var pl=csvPlayer(row[P[j]]);
+      if(!pl.raw){bad='第'+(j+1)+'位玩家为空';break;}
+      if(csvIsCpu(pl)){cpu++;continue;}
+      var sc=parseFloat(String(row[SC[j]]==null?'':row[SC[j]]).trim());
+      if(!isFinite(sc)){bad='第'+(j+1)+'位终局点数无法解析：'+row[SC[j]];break;}
+      var mm=csvMatchPlayer(t,pl);
+      if(mm.err){bad=mm.err;break;}
+      humans.push({pid:mm.pid,rank:j+1,score:sc,name:pl.name});
+    }
+    if(bad){skips.push({row:rowNo,reason:bad});continue;}
+    // 有人缺位就必须是电脑补位：2 人 + 2 电脑、3 人 + 1 电脑都算合法
+    if(humans.length<2||humans.length>4){skips.push({row:rowNo,reason:'有效选手 '+humans.length+' 人（应为 2~4）'});continue;}
+    if(cpu!==4-humans.length){skips.push({row:rowNo,reason:'缺 '+(4-humans.length)+' 个位置但不是电脑'});continue;}
+    parsed.push({rowNo:rowNo,time:String(row[0]||'').trim(),humans:humans,cpu:cpu});
+  }
+
+  // 桌匹配：选手集合必须与某桌座位完全一致
+  var seat={};
+  r.tables.forEach(function(tb,ti){seat[tb.players.slice().sort().join(',')]=ti;});
+  var byTable={};
+  parsed.forEach(function(rec){
+    var sig=rec.humans.map(function(h){return h.pid;}).sort().join(',');
+    var ti=(sig in seat)?seat[sig]:undefined;
+    if(ti===undefined){
+      // 精确匹配失败时放宽：座位互不重叠，故"包含全部选手的桌"最多只有一张，不存在歧义。
+      // 覆盖「2 人开打、另 2 席是电脑」「桌上有人没打这局」这类情况。
+      var hit=-1,cnt=0;
+      r.tables.forEach(function(tb,i){
+        var all=rec.humans.every(function(h){return tb.players.indexOf(h.pid)>=0;});
+        if(all){hit=i;cnt++;}
+      });
+      if(cnt===1)ti=hit;
+    }
+    if(ti===undefined){
+      manual.push({rowNo:rec.rowNo,time:rec.time,humans:rec.humans,cpu:rec.cpu,ti:null,h:null,on:false,
+        why:'第'+r.roundNo+'轮找不到这 '+rec.humans.length+' 人同桌'+(rec.cpu?'（含 '+rec.cpu+' 个电脑）':'')});
+      return;
+    }
+    (byTable[ti]=byTable[ti]||[]).push(rec);
+  });
+
+  var slotN=kind==='qual'?2:3;
+  Object.keys(byTable).forEach(function(ti){
+    var tb=r.tables[ti],recs=byTable[ti];
+    recs.sort(function(a,b){return a.time<b.time?-1:(a.time>b.time?1:0);});
+    // 时间聚类：相邻两条间隔过大 → 判为不同轮次，交人工
+    for(var k=1;k<recs.length;k++){
+      if(new Date(recs[k].time).getTime()-new Date(recs[k-1].time).getTime()>CSV_HALF_GAP_MS){
+        recs.slice(k).forEach(function(bad){
+          manual.push({rowNo:bad.rowNo,time:bad.time,humans:bad.humans,cpu:bad.cpu,ti:Number(ti),h:null,on:false,
+            why:'桌'+(Number(ti)+1)+' 与上一局相隔超过 3 小时，无法判断是第几个半庄'});
+        });
+        recs=recs.slice(0,k);break;
+      }
+    }
+    // 空槽：该半庄所有座位都还没录
+    var empty=[];
+    for(var h=0;h<slotN;h++){
+      var used=tb.players.some(function(pid){
+        var d=tb.detail[pid];if(!d)return false;
+        return num(d.scores&&d.scores[h])!==0||num(d.ranks&&d.ranks[h])!==0;
+      });
+      if(!used)empty.push(h);
+    }
+    if(recs.length>empty.length){
+      recs.slice(empty.length).forEach(function(bad){
+        manual.push({rowNo:bad.rowNo,time:bad.time,humans:bad.humans,cpu:bad.cpu,ti:Number(ti),h:null,on:false,
+          why:'桌'+(Number(ti)+1)+' 只剩 '+empty.length+' 个空半庄，无法自动定位'});
+      });
+      recs=recs.slice(0,empty.length);
+    }
+    recs.forEach(function(rec,k){
+      var h=empty[k];
+      rec.humans.forEach(function(x){
+        items.push({roundNo:r.roundNo,ti:Number(ti),h:h,pid:x.pid,rank:x.rank,score:x.score,name:x.name,row:rec.rowNo,time:rec.time});
+      });
+      // 本局有电脑顶替 → 桌上没打到的人记缺席：顺位取剩余名次（缺 1 人即 4 位），分数 -50
+      if(rec.cpu>0){
+        var inGame={};
+        rec.humans.forEach(function(x){inGame[x.pid]=true;});
+        var miss=tb.players.filter(function(pid){
+          var p=getP(t,pid);
+          return p&&!p.withdrawn&&!p.disqualified&&!inGame[pid];
+        });
+        miss.forEach(function(pid,i){
+          var p=getP(t,pid);
+          items.push({roundNo:r.roundNo,ti:Number(ti),h:h,pid:pid,rank:rec.humans.length+1+i,score:-50,
+            name:p.name,row:rec.rowNo,time:rec.time,absent:true});
+        });
+      }
+    });
+  });
+  return {items:items,manual:manual,skips:skips,roundNo:r.roundNo,kind:kind};
+}
+
+/* ==== 导入交互：逐桌确认 → 手动指定 → 写入 ==== */
+var _csv=null;
+
+function csvGroups(items){
+  var map={},out=[];
+  items.forEach(function(it){
+    var k=String(it.ti);  // 一桌一组：该桌的所有半庄在同一个确认框里
+    if(!map[k]){map[k]={ti:it.ti,roundNo:it.roundNo,time:it.time,items:[]};out.push(map[k]);}
+    if(it.time&&(!map[k].time||it.time<map[k].time))map[k].time=it.time;
+    map[k].items.push(it);
+  });
+  out.sort(function(a,b){return a.ti-b.ti||a.h-b.h;});
+  return out;
+}
+
+function csvStart(kind,text){
+  var t=curT();
+  var plan=csvPlan(t,kind,text);
+  if(!plan.items.length&&!plan.manual.length){
+    var why=plan.skips.length?plan.skips.map(function(k){return '第 '+k.row+' 行：'+k.reason;}).join('\n'):'文件里没有可录入的牌谱';
+    uiAlert('没有可导入的内容：\n'+why);
+    return;
+  }
+  _csv={kind:kind,groups:csvGroups(plan.items),manual:plan.manual,skips:plan.skips,accepted:[],gi:0};
+  window._modalSticky=true;   // 确认链期间点遮罩不关闭，避免静默中断导致"什么都没导入"
+  // 一条都没匹配上桌时，必须让用户知道为什么
+  if(!_csv.groups.length){
+    var why=plan.skips.length?plan.skips.slice(0,15).map(function(k){return '第 '+k.row+' 行：'+k.reason;}).join('\n'):'（无）';
+    uiAlert('本轮没有任何一桌能自动匹配，全部需要人工指定。\n原因如下：\n'+why+(plan.skips.length>15?'\n…共 '+plan.skips.length+' 条':''));
+    return;
+  }
+  csvAskTable();
+}
+
+function csvTableBox(g,idx,total){
+  var t=curT();
+  var byH={};
+  g.items.forEach(function(it){(byH[it.h]=byH[it.h]||[]).push(it);});
+  var h='<div class="modal-box" style="max-width:600px">';
+  h+='<h3 style="margin:0 0 4px">导入确认（第 '+(idx+1)+' / '+total+' 桌）</h3>';
+  h+='<p style="margin:0 0 8px;font-size:13px;color:#6b7280">第'+g.roundNo+'轮 · 桌'+(g.ti+1)+' · '+(g.time||'')+'</p>';
+  h+='<div class="flex-table"><table style="margin:0"><tr><th>半庄</th><th>顺位 / 选手 / 分数</th></tr>';
+  Object.keys(byH).sort().forEach(function(k){
+    byH[k].sort(function(a,b){return a.rank-b.rank;});
+    h+='<tr><td>第'+(Number(k)+1)+'半庄</td><td style="text-align:left">'+
+      byH[k].map(function(x){
+        return x.absent
+          ? '<span style="color:#b45309">缺席</span> '+x.rank+'位 '+esc(x.name)+' <b>'+fmt(x.score)+'</b>'
+          : x.rank+'位 '+esc(x.name)+' <b>'+fmt(x.score)+'</b>';
+      }).join('　')+'</td></tr>';
+  });
+  h+='</table></div>';
+  if(g.items.some(function(x){return x.absent;}))
+    h+='<p style="margin:8px 0 0;font-size:12px;color:#b45309">标「缺席」的是本局被电脑顶替、没打到的选手，将记为 <b>缺席 + 对应顺位 + -50 分</b>。不认可就点「跳过这一桌」。</p>';
+  h+='<div class="modal-actions" style="margin-top:12px;flex-wrap:wrap">';
+  h+='<button class="green" onclick="csvTableAnswer(true)">✔ 导入这一桌</button>';
+  h+='<button class="gray" onclick="csvTableAnswer(false)">跳过这一桌</button>';
+  h+='<button class="small" onclick="csvTableRest(true)">余下全部导入</button>';
+  h+='<button class="small" onclick="csvTableRest(false)">余下全部跳过</button>';
+  h+='</div></div>';
+  return h;
+}
+
+function csvAskTable(){
+  if(!_csv||_csv.gi>=_csv.groups.length)return csvManualStep();
+  openModal(csvTableBox(_csv.groups[_csv.gi],_csv.gi,_csv.groups.length));
+}
+function csvTableAnswer(yes){
+  if(!_csv)return;
+  if(yes)_csv.accepted.push(_csv.groups[_csv.gi]);
+  _csv.gi++;closeModal();csvAskTable();
+}
+function csvTableRest(yes){
+  if(!_csv)return;
+  if(yes)for(var i=_csv.gi;i<_csv.groups.length;i++)_csv.accepted.push(_csv.groups[i]);
+  _csv.gi=_csv.groups.length;closeModal();csvAskTable();
+}
+
+function csvManualBox(){
+  var t=curT(),r=csvTargetRound(t,_csv.kind);
+  var slotN=_csv.kind==='qual'?2:3;
+  var h='<div class="modal-box" style="max-width:760px">';
+  h+='<h3 style="margin:0 0 6px">以下牌谱无法自动定位，请指定桌与半庄</h3>';
+  h+='<p style="margin:0 0 8px;font-size:12px;color:#6b7280">不勾选或未选桌则不会导入。共 '+_csv.manual.length+' 条。'+
+    '<button class="small" style="margin-left:8px" onclick="csvCheckAll(true)">全部勾选</button>'+
+    '<button class="small" onclick="csvCheckAll(false)">全部取消</button></p>';
+  if(_csv.skips.length){
+    h+='<details style="margin:0 0 8px;font-size:12px"><summary style="cursor:pointer;color:#b45309">另有 '+_csv.skips.length+' 条完全无法处理（点开看原因）</summary>'+
+      '<div style="max-height:120px;overflow:auto;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px;margin-top:4px">'+
+      _csv.skips.map(function(k){return '第 '+k.row+' 行：'+esc(k.reason);}).join('<br>')+'</div></details>';
+  }
+  h+='<div style="max-height:340px;overflow:auto;border:1px solid #e5e7eb;border-radius:8px">';
+  h+='<table style="margin:0"><tr><th>行</th><th>时间</th><th>选手 / 分数</th><th>原因</th><th>桌</th><th>半庄</th><th>导入</th></tr>';
+  _csv.manual.forEach(function(m,idx){
+    h+='<tr><td>'+m.rowNo+'</td><td style="font-size:11px">'+esc(m.time||'')+'</td>';
+    h+='<td style="text-align:left;font-size:12px">'+m.humans.map(function(x){return x.rank+'位 '+esc(x.name)+' '+fmt(x.score);}).join('<br>')+'</td>';
+    h+='<td style="text-align:left;font-size:11px;color:#b45309">'+esc(m.why)+'</td>';
+    h+='<td><select onchange="csvPick('+idx+',\'ti\',this.value)"><option value="">—</option>';
+    r.tables.forEach(function(tb,ti){
+      var n=tb.players.length;
+      h+='<option value="'+ti+'"'+(m.ti===ti?' selected':'')+'>桌'+(ti+1)+'（'+n+'人）</option>';
+    });
+    h+='</select></td><td><select onchange="csvPick('+idx+',\'h\',this.value)"><option value="">—</option>';
+    for(var k=0;k<slotN;k++)h+='<option value="'+k+'"'+(m.h===k?' selected':'')+'>第'+(k+1)+'半庄</option>';
+    h+='</select></td><td><input type="checkbox" '+(m.on?'checked':'')+' onchange="csvPick('+idx+',\'on\',this.checked)"></td></tr>';
+  });
+  h+='</table></div>';
+  h+='<div class="modal-actions" style="margin-top:12px">';
+  h+='<button class="green" onclick="csvFinish()">✔ 确认写入</button>';
+  h+='<button class="gray" onclick="csvCancel()">取消全部</button></div></div>';
+  return h;
+}
+function csvManualStep(){
+  if(!_csv){window._modalSticky=false;return;}
+  if(!_csv.manual.length){window._modalSticky=false;return csvFinish();}
+  openModal(csvManualBox());
+}
+function csvCheckAll(v){
+  _csv.manual.forEach(function(m){m.on=!!v;});
+  openModal(csvManualBox());
+}
+function csvPick(idx,field,val){
+  var m=_csv&&_csv.manual[idx];if(!m)return;
+  if(field==='on')m.on=!!val;
+  else m[field]=(val===''?null:Number(val));
+}
+function csvCancel(){ _csv=null;closeModal();uiAlert('已取消，未写入任何成绩。'); }
+
+function csvFinish(){
+  var t=curT(),plan=_csv;
+  if(!t||!plan){closeModal();return;}
+  var picked=plan.accepted.length+plan.manual.filter(function(m){return m.on&&m.ti!=null&&m.h!=null;}).length;
+  if(!picked){window._modalSticky=true;uiConfirm('没有勾选或确认任何条目，本次不会写入任何成绩。确定关闭吗？',function(){window._modalSticky=false;closeModal();});return;}
+  try{localStorage.setItem('curious_cup_data_undo',JSON.stringify(DATA));}catch(e){}   // 写入前快照，可一键撤销
+  var r=csvTargetRound(t,plan.kind);
+  if(!r){closeModal();uiAlert('轮次已变化，请重新导入');return;}
+  var n=0,skipN=0;
+  function put(ti,h,pid,rank,score,absent){
+    var tb=r.tables[ti];if(!tb)return false;
+    if(tb.players.indexOf(pid)<0)return false;      // 座位已变，绝不写入
+    var d=tb.detail[pid];if(!d)return false;
+    d.ranks[h]=rank;d.scores[h]=score;
+    if(absent)d.absent=1;                            // 缺席计数
+    return true;
+  }
+  plan.accepted.forEach(function(g){
+    g.items.forEach(function(it){ if(put(it.ti,it.h,it.pid,it.rank,it.score,it.absent))n++; else skipN++; });
+  });
+  plan.manual.forEach(function(m){
+    if(!m.on||m.ti==null||m.h==null){skipN++;return;}
+    m.humans.forEach(function(x){ if(put(m.ti,m.h,x.pid,x.rank,x.score))n++; else skipN++; });
+  });
+  closeModal();_csv=null;window._modalSticky=false;
+  if(!n){uiAlert('没有写入任何成绩（共 '+skipN+' 条因座位已变或未选桌被跳过）。');return;}
+  if(plan.kind==='qual')computeQualRound(t,r);else computeElimRound(t,r);
+  saveData();render();
+  var msg='已写入 '+n+' 条成绩。';
+  var rest=plan.skips.length+skipN;
+  if(rest)msg+='\n另有 '+rest+' 条未录入：可重新导入或用「录入/分桌」手工补。';
+  openModal('<div class="modal-box"><div class="modal-msg" style="white-space:pre-wrap">'+esc(msg)+'</div>'+
+    '<div class="modal-actions"><button class="gray" onclick="csvUndo()">↩ 撤销本次导入</button>'+
+    '<button class="green" onclick="closeModal()">确定</button></div></div>');
+}
+function csvUndo(){
+  try{
+    var raw=localStorage.getItem('curious_cup_data_undo');
+    if(!raw){uiAlert('没有可撤销的快照（只保留最近一次导入前）。');return;}
+    DATA=fixData(JSON.parse(raw));
+    saveData();render();closeModal();
+    uiAlert('已恢复到本次导入之前的数据。');
+  }catch(e){uiAlert('撤销失败：'+(e&&e.message?e.message:e));}
+}
+function startCsvImport(kind){
+  _csvKind=kind;
+  if(!curT()){uiAlert('请先选择赛事');return;}
+  var f=document.getElementById('csvFile');
+  if(!f){uiAlert('文件选择器不可用');return;}
+  f.value='';f.click();
+}
+function onCsvPicked(){
+  var f=document.getElementById('csvFile');
+  if(!f||!f.files||!f.files[0])return;
+  var file=f.files[0],reader=new FileReader();
+  reader.onload=function(){
+    try{ csvStart(_csvKind,reader.result); }
+    catch(e){ uiAlert('牌谱解析失败：'+(e&&e.message?e.message:e)); }
+    f.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+
+/* ==== 模块5：选手池 ==== */
+function viewPool(t){
+  var act=activePlayers(t);
+  var wd=t.players.filter(function(p){return p.withdrawn;}).length;
+  var dq=t.players.filter(function(p){return p.disqualified;}).length;
+  var stat='活跃 '+act.length+' 人';
+  if(wd||dq)stat+='（含退赛 '+wd+(dq?'、取消资格 '+dq:'')+'）';
+  var h='<div class="card"><h2>选手池 <span class="tag ongoing">进行中</span></h2>';
+  h+='<div class="muted">'+stat+'</div>';
+  if(!APP.ppPool){
+    h+='<div class="no-print"><div class="hint" style="margin:4px 0;font-size:13px">输入昵称（每行一个），选择来源后批量加入。选手分为直邀（直接邀请）、入围赛晋级（常规晋赛）和外卡（特殊名额）三类。</div>'+
+    '<div style="display:flex;gap:12px;flex-wrap:wrap">'+
+    '<div style="flex:1;min-width:200px"><b style="font-size:13px;color:#1c5f86">🏆 直邀</b><textarea id="poolText_invite" placeholder="每行一个昵称"></textarea></div>'+
+    '<div style="flex:1;min-width:200px"><b style="font-size:13px;color:#237b63">🎯 入围赛晋级</b><textarea id="poolText_qualifier" placeholder="每行一个昵称"></textarea></div>'+
+    '<div style="flex:1;min-width:200px"><b style="font-size:13px;color:#9a6a12">🌟 外卡</b><textarea id="poolText_wildcard" placeholder="每行一个昵称"></textarea></div>'+
+    '</div>'+
+    '<div class="toolbar"><button class="green" onclick="batchAdd(\'invite\')">+ 直邀加入</button><button class="green" onclick="batchAdd(\'qualifier\')">+ 入围赛晋级</button><button class="orange" onclick="batchAdd(\'wildcard\')">+ 外卡加入</button><button onclick="importInvites()">从直邀名单导入</button><button onclick="importFromTournament()">从已有赛事导入</button></div>';
+    h+='<div class="toolbar"><button class="green" onclick="batchAdd()">+ 批量加入</button><button onclick="importInvites()">从直邀名单导入</button><button onclick="importFromTournament()">从已有赛事导入</button></div></div>';
+  }else{
+    h+='<div class="toolbar"><button class="no-print" onclick="togglePreview(\'ppPool\')">✕ 退出预览</button></div>';
+  }
+  if(t.players.length){
+    h+='<div class="flex-table"><table><tr><th>#</th><th>UID</th><th>昵称</th><th>来源</th><th>状态</th><th class="no-print">操作</th></tr>';
+    for(var i=0;i<t.players.length;i++){
+      var p=t.players[i];
+      var cls=p.withdrawn?'withdrawn':(p.disqualified?'disqualified':'');
+      var srcTag='qualifier';
+      if(p.source==='invite')srcTag='<span class="tag invite">直邀</span>';
+      else if(p.source==='wildcard')srcTag='<span class="tag champ">外卡</span>';
+      else if(p.source==='qualifier')srcTag='<span class="tag three">入围赛</span>';
+      h+='<tr class="'+cls+'"><td>'+(i+1)+'</td><td style="font-size:12px;color:#68737d">'+(p.playerUid||'')+'</td><td>'+esc(p.name)+'</td><td>'+srcTag+'</td><td>'+playerStatusTag(p)+'</td>';
+      h+='<td class="no-print">';
+      h+='<button class="mini gray" onclick="renamePlayer(\''+p.id+'\')">改名</button> ';
+      h+='<button class="mini '+(p.withdrawn?'green':'red')+'" onclick="toggleWithdraw(\''+p.id+'\')">'+(p.withdrawn?'恢复':'退赛')+'</button> ';
+      h+='<button class="mini '+(p.disqualified?'green':'orange')+'" onclick="toggleDQ(\''+p.id+'\')">'+(p.disqualified?'恢复资格':'取消资格')+'</button> ';
+      h+='<button class="mini red" onclick="removePlayer(\''+p.id+'\')">删除</button>';
+      h+='</td></tr>';
+    }
+    h+='</table></div>';
+  }else{
+    h+='<p class="muted">还没有选手，在上方输入昵称后选择来源批量加入。</p>';
+  }
+  h+='<div class="muted no-print" style="margin:10px 0 0;font-size:13px;border-top:1px solid var(--line);padding-top:10px">'+
+    '⚠ 排名不分先后。直邀 = 赛事主办直接邀请，入围赛晋级 = 通过入围赛晋级的选手，外卡 = 特殊名额加入。'+
+    '<br><button class="gray" onclick="exportPlayerList()" style="margin-top:6px">📋 导出选手名单</button></div>';
+  h+='</div>';
+  return h;
+}
+
+function exportPlayerList(){
+  var t=curT();if(!t)return;
+  var groups=[['直邀','invite','#dcebf5','#1c5f86'],['入围赛晋级','qualifier','#f2e9c2','#7c650f'],['外卡','wildcard','#fbe7c4','#9a6a12']];
+  var h='<h1 style="font-size:16px;margin:0 0 2px">'+esc(t.name)+' 参赛选手名单</h1><p style="font-size:11px;color:#6b7280;margin:0 0 10px">排名不分先后</p>';
+  groups.forEach(function(g){
+    var ps=t.players.filter(function(p){return p.source===g[1] && !p.disqualified;});
+    if(!ps.length)return;
+    h+='<h2 style="font-size:14px;margin:12px 0 4px;color:'+g[3]+'">'+g[0]+'</h2>';
+    h+='<div style="border:1px solid '+g[2]+';border-radius:8px;overflow:hidden">';
+    ps.forEach(function(p,i){
+      var bdr='border-bottom:1px solid #eee6d4;padding:5px 8px';
+      var label=esc(p.name)+(p.playerUid?' <span style="color:#68737d;font-size:11px">#'+esc(p.playerUid)+'</span>':'')+(p.withdrawn?' <span style="color:#c2410c;font-size:11px">退赛</span>':'');
+      if(i%2===0){
+        h+='<div style="display:flex">';
+        h+='<div style="flex:1;'+bdr+';border-right:1px solid #eee6d4">'+label+'</div>';
+      }else{
+        h+='<div style="flex:1;'+bdr+'">'+label+'</div></div>';
+      }
+    });
+    if(ps.length%2!==0)h+='</div>';
+    h+='</div>';
+  });
+  var pa=document.getElementById('printArea');
+  pa.innerHTML=h;
+  var sv=document.title;document.title=t.name+' 选手名单';
+  setTimeout(function(){try{window.print();}catch(e){}document.title=sv;},30);
+}function playerStatusTag(p){
+  if(p.disqualified)return '<span class="tag dq">取消资格</span>';
+  if(p.withdrawn)return '<span class="tag wd">退赛</span>';
+  return '<span class="tag ongoing">参赛</span>';
+}
+function exportMatchUIDs(){
+  var t=curT();if(!t)return;
+  var q=t.qualifier||{};var r=q.rounds[q.rounds.length-1];
+  if(!r||!r.tables.length){uiAlert('还没有已分桌的轮次。');return;}
+  var lines=[];
+  r.tables.forEach(function(tb){
+    var uids=tb.players.map(function(pid){
+      var p=getP(t,pid);return (p&&p.playerUid)||pid;
+    });
+    lines.push(uids.join(' '));
+  });
+  var ts=new Date();
+  downloadText('好奇杯对阵_'+ts.getFullYear()+pad(ts.getMonth()+1)+pad(ts.getDate())+'.txt',lines.join('\n'),'text/plain;charset=utf-8');
+  uiAlert('已导出 '+lines.length+' 桌对阵（每行一桌，空格分隔4位UID）。');
+}
+
+
+function requalRound(){
+  var t=curT();if(!t)return;var q=t.qualifier;
+  if(!q.rounds.length||q.rounds.every(function(r){return r.confirmed;})){uiAlert('没有未确认的轮次，无法重新分桌');return;}
+  var ri=q.rounds.length-1;while(ri>=0&&q.rounds[ri].confirmed)ri--;
+  if(ri<0){uiAlert('没有未确认轮次');return;}
+  var r=q.rounds[ri];
+  var pids=[];r.tables.forEach(function(tb){tb.players.forEach(function(pid){pids.push(pid);});});
+  pids=shuffle(pids);
+  var nt=seatTables(pids);
+  r.tables=nt.map(function(players){
+    var d={};players.forEach(function(pid){d[pid]=defaultQualDetail(getP(t,pid));});
+    return {players:players,detail:d};
+  });
+  computeQualRound(t,r);
+  saveData();render();
+  uiAlert('第'+(ri+1)+'轮已重新随机分桌。之前录入的成绩已清除。');
+}
+function batchAdd(source){
+  var t=curT();if(!t)return;
+  source=source||'qualifier';
+  var el=document.getElementById('poolText_'+source);
+  var names=((el&&el.value)||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+  if(!names.length){uiAlert('请先输入昵称，每行一个');return;}
+  var exist={};
+  t.players.forEach(function(p){exist[p.name]=true;});
+  var added=0,skip=0;
+  names.forEach(function(n){
+    if(exist[n]){skip++;return;}
+    var pName=n,pUid='';var parts=n.trim().split(/\s+/);if(parts.length>1&&/^\d+$/.test(parts[0])){pUid=parts[0];pName=parts.slice(1).join(' ');}
+    t.players.push({id:uid(),name:pName,playerUid:pUid,withdrawn:false,disqualified:false,elimReached:null,elimPlayed:null,source:source});
+    exist[n]=true;added++;
+  });
+  saveData();render();
+  uiAlert('成功加入 '+added+' 人'+(skip?'，跳过重复 '+skip+' 人':''));
+}
+function importFromTournamentDo(id){
+  var src=getT(id);var t=curT();if(!src||!t)return closeModal();
+  var exist={};t.players.forEach(function(p){exist[p.name]=true;});
+  var added=0;
+  src.players.forEach(function(p){
+    if(!exist[p.name]){t.players.push(JSON.parse(JSON.stringify(p)));exist[p.name]=true;added++;}
+  });
+  closeModal();saveData();render();
+  uiAlert('成功从「'+esc(src.name)+'」导入 '+added+' 名新选手。');
+}
+function importFromTournament(){
+  var t=curT();if(!t)return;
+  var others=DATA.tournaments.filter(function(x){return x.id!==t.id;});
+  if(!others.length){uiAlert('没有其他赛事可供导入。');return;}
+  var body='<div class="modal-msg">选择要从哪届赛事导入选手名单（按名字去重）</div><div class="modal-actions" style="flex-direction:column;align-items:stretch">';
+  others.forEach(function(x){
+    body+="<button onclick=\"importFromTournamentDo('"+x.id+"')\">"+esc(x.name)+'（'+x.players.length+'人）</button>';
+  });
+  body+='<button class="gray" onclick="closeModal()">取消</button></div>';
+  openModal('<div class="modal-box">'+body+'</div>');
+}
+function importInvites(){
+  var t=curT();if(!t)return;
+  var inv=inviteList();
+  if(!inv.length){uiAlert('积分榜暂无直邀名单。');return;}
+  var exist={};
+  t.players.forEach(function(p){exist[p.name]=true;});
+  var added=0,skip=0;
+  inv.forEach(function(x){
+    if(exist[x.name]){skip++;return;}
+    t.players.push({id:uid(),name:x.name,withdrawn:false,disqualified:false,elimReached:null,elimPlayed:null,source:'invite'});
+    exist[x.name]=true;added++;
+  });
+  saveData();render();
+  uiAlert('从直邀名单导入 '+added+' 人'+(skip?'，跳过重复 '+skip+' 人':''));
+}
+function renamePlayer(pid){
+  var t=curT();if(!t)return;
+  var p=getP(t,pid);if(!p)return;
+  uiPrompt('输入新昵称',p.name,function(name){
+    name=(name||'').trim();
+    if(!name){uiAlert('昵称不能为空');return;}
+    p.name=name;saveData();render();
+  });
+}
+function toggleDQ(pid){
+  var t=curT();if(!t)return;
+  var p=getP(t,pid);if(!p)return;
+  if(!p.disqualified){
+    uiConfirm('取消「'+p.name+'」的参赛资格？（该选手将不占分桌名额、不计入积分榜）',function(){
+      p.disqualified=true;saveData();render();
+    });
+  }else{
+    p.disqualified=false;saveData();render();
+  }
+}
+function removePlayer(pid){
+  var t=curT();if(!t)return;
+  var p=getP(t,pid);if(!p)return;
+  uiConfirm('确定删除选手「'+p.name+'」？',function(){
+    t.players=t.players.filter(function(x){return x.id!==pid;});
+    // 删除后同步清理所有轮次中对该选手的引用，避免渲染时 getP null 崩溃
+    var q=t.qualifier;
+    if(q)q.rounds.forEach(function(r){
+      if(r.confirmed)return;
+      r.tables.forEach(function(tb){
+        var idx=tb.players.indexOf(pid);
+        if(idx>=0){
+          tb.players.splice(idx,1);delete tb.detail[pid];
+          var seated={};r.tables.forEach(function(tb2){tb2.players.forEach(function(p){seated[p]=true;});});
+          var sub=null;t.players.forEach(function(p){if(!p.withdrawn&&!p.disqualified&&!seated[p.id]&&!sub)sub=p.id;});
+          if(sub){tb.players.push(sub);tb.detail[sub]=defaultQualDetail(getP(t,sub));}
+        }
+      });
+      fixTableSizes(t,r,'qual');
+    });
+    if(t.elimination)t.elimination.rounds.forEach(function(r){
+      if(r.confirmed)return;
+      r.tables.forEach(function(tb){
+        var idx=tb.players.indexOf(pid);
+        if(idx>=0){
+          tb.players.splice(idx,1);delete tb.detail[pid];
+          var seated={};r.tables.forEach(function(tb2){tb2.players.forEach(function(p){seated[p]=true;});});
+          var sub=null;t.players.forEach(function(p){if(!p.withdrawn&&!p.disqualified&&!seated[p.id]&&!sub)sub=p.id;});
+          if(sub){tb.players.push(sub);tb.detail[sub]=defaultElimDetail(getP(t,sub));}
+        }
+      });
+      fixTableSizes(t,r,'elim');
+    });
+    if(t.elimination)t.elimination.rounds.forEach(function(r){r.tables.forEach(function(tb){
+      var idx=tb.players.indexOf(pid);
+      if(idx>=0){tb.players.splice(idx,1);delete tb.detail[pid];}
+      var ai=r.advanced.indexOf(pid);if(ai>=0)r.advanced.splice(ai,1);
+    });});
+    saveData();render();
+  });
+}
+function tagsOf(t,p){
+  var s='';
+  if(p.withdrawn)s+='<span class="tag wd">退赛</span>';
+  if(p.disqualified)s+='<span class="tag dq">取消资格</span>';
+  return s;
+}
+function shouldMarkWd(t,p){
+  if(!p||!p.withdrawn)return false;
+  // 晋级淘汰赛后退赛（含淘汰赛每轮晋级后退赛）：成绩视为完整，最终排名不标「退赛」
+  if(elimPlayedStable(t,p.id)>=0||elimSeatedRound(t,p.id)>=0)return false;
+  return true; // 仅晋级赛退赛（未晋级淘汰赛）→ 标退赛
+}
+function finalTagsOf(t,p){
+  var s='';
+  if(shouldMarkWd(t,p))s+='<span class="tag wd">退赛</span>';
+  if(p.disqualified)s+='<span class="tag dq">取消资格</span>';
+  return s;
+}
+/* ==== 模块6：晋级赛 ==== */
+function viewQualifier(t){
+  var q=t.qualifier;
+  if(q.rankConfirmed&&q.promoted&&!t.elimination){
+    return viewQualPromoted(t);
+  }
+  var h='<div class="card"><div class="toolbar no-print">';
+  h+='<button class="'+(APP.ppTab==='entry'?'orange':'gray')+'" onclick="setQualTab(\'entry\')">录入/分桌</button>';
+  h+='<button class="'+(APP.ppTab==='rank'?'orange':'gray')+'" onclick="setQualTab(\'rank\')">实时排名</button>';
+  h+='<button class="gray" onclick="showExportModal(\'qual\')">🖨 导出（晋级赛）</button><button class="gray" onclick="exportMatchUIDs()" style="margin-left:4px">📋 导出对阵(UID)</button>';
+  h+='<button class="gray" onclick="startCsvImport(\'qual\')" style="margin-left:4px">📥 导入牌谱CSV</button>';
+  h+='<button class="gray" onclick="adjSeatOpen(\'qual\')" style="margin-left:4px">⇄ 手动修改分桌</button>';
+  h+='<span style="flex:1"></span>';
+  h+='<button class="'+(APP.ppQualRank?'green':'')+'" onclick="togglePreview(\'ppQualRank\')">'+(APP.ppQualRank?'✕ 退出预览':'👁 选手预览')+'</button>';
+  h+='</div>';
+  h+=APP.ppTab==='entry'?qualEntryHTML(t):qualRankHTML(t);
+  h+='</div>';
+  return h;
+}
+function setQualTab(tab){APP.ppTab=tab;render();}
+function qualEntryHTML(t){
+  var q=t.qualifier;
+  var h='';
+  if(!q.rounds.length){
+    h+='<div class="hint">晋级赛：共 '+(qualMaxRounds(t))+' 轮，每轮 '+CONFIG.QUALIFY_MATCHES_PER_ROUND+' 个半庄，前 '+CONFIG.PROMOTE_TO_ELIM+' 名晋级淘汰赛。</div>';
+    h+='<div class="toolbar no-print"><button class="green" onclick="buildRound()">🎲 随机抽签分桌（第1轮）</button></div>';
+    return h;
+  }
+  var last=q.rounds[q.rounds.length-1];
+  var allConfirmed=q.rounds.every(function(r){return r.confirmed;});
+  h+='<div class="toolbar no-print">';
+  if(!last.confirmed){
+    h+='<button class="green" onclick="confirmQualRound()">✔ 确认本轮结果（跳转排名）</button>';
+    h+='<button class="gray" onclick="requalRound()">🎲 重新分桌</button>';
+  }else{
+    h+='<button class="green" onclick="nextQualRound()">➕ 下一轮分桌</button>';
+  }
+  if(q.rounds.length>1){
+    h+='<button class="gray" onclick="rollbackRound(\'qual\')">↩ 回退上一轮</button>';
+  }
+  h+='</div>';
+  h+='<div class="muted">第 '+q.rounds.length+'/'+qualMaxRounds(t)+' 轮'+(last.confirmed?'（已确认，可开始下一轮）':'（录入中）')+'</div>';
+  // 轮次切换：多轮时按钮直达，避免一页划到底
+  if(q.rounds.length>1){
+    var viewNo=APP.viewQualRound&&q.rounds.some(function(r){return r.roundNo===APP.viewQualRound;})?APP.viewQualRound:last.roundNo;
+    h+='<div class="toolbar no-print"><span class="muted">查看轮次：</span>';
+    q.rounds.forEach(function(r){
+      h+='<button class="mini '+(r.roundNo===viewNo?'orange':'gray')+'" onclick="setQualRoundView('+r.roundNo+')">第'+r.roundNo+'轮'+(r.roundNo===q.rounds.length&&!r.confirmed?'·当前':'')+'</button>';
+    });
+    h+='</div>';
+    var vr=q.rounds.find(function(r){return r.roundNo===viewNo;});
+    if(vr)h+=qualRoundTableHTML(t,vr);
+  }else{
+    h+=qualRoundTableHTML(t,last);
+  }
+  return h;
+}
+function setQualRoundView(no){APP.viewQualRound=no;render();}
+function qualRoundTableHTML(t,r){
+  var h='<h3>第'+r.roundNo+'轮'+(r.confirmed?'（已确认）':'')+'</h3>';
+  r.tables.forEach(function(tb,ti){
+    var n=tb.players.length;
+    h+='<div class="tbl-cap">桌 '+(ti+1)+(n<4?' · '+n+'人桌':'')+'</div>';
+    h+='<div class="flex-table"><table>';
+    h+='<tr><th>昵称</th><th>桌号</th><th>半庄1顺</th><th>半庄1分</th><th>半庄2顺</th><th>半庄2分</th><th>特殊</th><th>轮top</th><th>扣分</th><th>迟到</th><th>缺席</th><th>小分(顺位)</th><th>本轮top</th><th>本轮总分</th></tr>';
+    tb.players.forEach(function(pid){
+      var p=getP(t,pid);var d=tb.detail[pid]||defaultQualDetail(p);
+      if(!p){h+='<tr class="withdrawn"><td colspan="20" style="text-align:left;color:#999;font-size:12px">⚠ 该选手已删除</td></tr>';return;}
+      var cls=p.withdrawn?'withdrawn':(p.disqualified?'disqualified':'');
+      h+='<tr class="'+cls+'">';
+      h+='<td style="text-align:left">'+esc(p.name)+tagsOf(t,p)+'</td>';
+      h+='<td class="no-print">'+(r.confirmed?'<b>桌'+(ti+1)+'</b>':'<select onchange="setQualSeat('+r.roundNo+','+ti+',\''+pid+'\',this.value)">'+seatOptions(t,r,pid)+'</select>')+(n<4?' <span class="tag three">'+n+'人桌</span>':'')+'</td>';
+      for(var hh=0;hh<2;hh++){
+        h+='<td>'+(r.confirmed?fmt(d.ranks[hh]):'<input class="mini" type="number" step="any" value="'+fmt(d.ranks[hh])+'" onchange="setQualRank('+r.roundNo+','+ti+',\''+pid+'\','+hh+',this.value)">')+'</td>';
+        h+='<td>'+(r.confirmed?fmt(d.scores[hh]):'<input class="mini" type="number" step="any" value="'+fmt(d.scores[hh])+'" onchange="setQualScore('+r.roundNo+','+ti+',\''+pid+'\','+hh+',this.value)">')+'</td>';
+      }
+      h+='<td>'+(r.confirmed?fmt(d.special||0):'<input class="mini" type="number" step="any" value="'+fmt(d.special||0)+'" onchange="setQualField('+r.roundNo+','+ti+',\''+pid+'\',\'special\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.topBonusManual!=null?d.topBonusManual:d.topBonus):'<input class="mini" type="number" step="any" value="'+(d.topBonusManual!=null?fmt(d.topBonusManual):'')+'" placeholder="'+fmt(d.topBonus)+'" onchange="setQualTop('+r.roundNo+','+ti+',\''+pid+'\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.penalty||0):'<input class="mini" type="number" step="any" value="'+fmt(d.penalty||0)+'" onchange="setQualField('+r.roundNo+','+ti+',\''+pid+'\',\'penalty\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.late||0):'<input class="mini" type="number" step="any" value="'+fmt(d.late||0)+'" onchange="setQualField('+r.roundNo+','+ti+',\''+pid+'\',\'late\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.absent||0):'<input class="mini" type="number" step="any" value="'+fmt(d.absent||0)+'" onchange="setQualField('+r.roundNo+','+ti+',\''+pid+'\',\'absent\',this.value)">')+'</td>';
+      h+='<td>'+(d.ranks?d.ranks.map(fmt).join('·'):'')+'</td>';
+      h+='<td>'+(d._isTop?'<b>TOP</b>':'')+'</td>';
+      h+='<td><b>'+fmt(d._roundTotal)+'</b></td>';
+      h+='</tr>';
+    });
+    h+='</table></div>';
+  });
+  return h;
+}
+function seatOptions(t,r,pid){
+  var opts='';
+  r.tables.forEach(function(tb,ti){
+    tb.players.forEach(function(p2,i){
+      opts+='<option value="'+ti+'_'+i+'"'+(p2===pid?' selected':'')+'>桌'+(ti+1)+'·位'+(i+1)+'</option>';
+    });
+  });
+  return opts;
+}
+function getQualTable(t,roundNo,ti){
+  var r=t.qualifier.rounds.find(function(x){return x.roundNo===roundNo;});
+  if(!r)return null;
+  return {r:r,tb:r.tables[ti]};
+}
+function setQualSeat(roundNo,ti,pid,target){
+  var t=curT();if(!t)return;
+  var g=getQualTable(t,roundNo,ti);if(!g)return;
+  var parts=String(target).split('_');
+  var t2=parseInt(parts[0],10),i2=parseInt(parts[1],10);
+  if(t2===ti)return;
+  var tb=g.tb,tb2=g.r.tables[t2];
+  if(!tb||!tb2)return;
+  var i1=tb.players.indexOf(pid);if(i1<0)return;
+  var other=tb2.players[i2];
+  if(other==null)return;
+  tb.players[i1]=other;tb2.players[i2]=pid;
+  var d1=tb.detail[pid]||defaultQualDetail(getP(t,pid));
+  var d2=tb2.detail[other]||defaultQualDetail(getP(t,other));
+  delete tb.detail[pid];delete tb2.detail[other];
+  tb.detail[other]=d1;tb2.detail[pid]=d2;
+  [tb,tb2].forEach(function(x){x.players.forEach(function(pp){if(!x.detail[pp])x.detail[pp]=defaultQualDetail(getP(t,pp));});});
+  computeQualRound(t,g.r);
+  saveData();render();
+}
+/* 录入后重绘但保持视口与焦点：移动端浏览器在输入框被移除后会滚回页首，
+   这里在重绘前后记录/还原滚动位置，并按 onchange 签名找回同一个输入框。*/
+function viewSig(el){
+  try{return (el&&el.getAttribute&&el.getAttribute('onchange'))||null;}catch(e){return null;}
+}
+function renderKeepView(){
+  // 移动端 change 事件常在失焦后才触发，activeElement 可能已不是输入框；
+  // 用 focusin 捕获最后一次聚焦的输入框作为兜底。
+  if(!renderKeepView._bound&&typeof document.addEventListener==='function'){
+    renderKeepView._bound=true;
+    document.addEventListener('focusin',function(e){renderKeepView._sig=viewSig(e.target);},true);
+  }
+  var ae=document.activeElement;
+  var sig=viewSig(ae)||renderKeepView._sig||null;
+  var sel=null;try{sel=ae&&ae.selectionStart;}catch(e){}
+  var sx=0,sy=0;
+  try{sx=window.pageXOffset||(document.documentElement&&document.documentElement.scrollLeft)||0;}catch(e){}
+  try{sy=window.pageYOffset||(document.documentElement&&document.documentElement.scrollTop)||0;}catch(e){}
+  render();
+  function restore(){
+    try{
+      if(sig){
+        var all=document.querySelectorAll('[onchange]');
+        for(var i=0;i<all.length;i++){
+          if(viewSig(all[i])===sig){
+            var el=all[i];if(el.focus)el.focus();
+            try{if(sel!=null&&el.setSelectionRange)el.setSelectionRange(sel,sel);}catch(e){}
+            break;
+          }
+        }
+      }
+      if(window.scrollTo)window.scrollTo(sx,sy);
+      else{document.documentElement.scrollTop=sy;document.documentElement.scrollLeft=sx;}
+    }catch(e){}
+  }
+  restore();
+  /* 部分移动端浏览器在节点移除后异步重置滚动，补一次还原 */
+  if(typeof requestAnimationFrame==='function')requestAnimationFrame(restore);
+  if(typeof setTimeout==='function')setTimeout(restore,0);
+}
+function setQualRank(roundNo,ti,pid,h,val){
+  var t=curT();if(!t)return;
+  var g=getQualTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  d.ranks[h]=num(val)<1?1:(num(val)>4?4:num(val));
+  computeQualRound(t,g.r);saveData();renderKeepView();
+}
+function setQualScore(roundNo,ti,pid,h,val){
+  var t=curT();if(!t)return;
+  var g=getQualTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  d.scores[h]=num(val);
+  computeQualRound(t,g.r);saveData();renderKeepView();
+}
+function setQualField(roundNo,ti,pid,field,val){
+  var t=curT();if(!t)return;
+  var g=getQualTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  if(field==='late'||field==='absent')d[field]=Math.max(0,num(val));
+  else d[field]=num(val);
+  computeQualRound(t,g.r);saveData();renderKeepView();
+}
+function setQualTop(roundNo,ti,pid,val){
+  var t=curT();if(!t)return;
+  var g=getQualTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  d.topBonusManual=(String(val).trim()==='')?null:num(val);
+  computeQualRound(t,g.r);saveData();renderKeepView();
+}
+/* ==== 手动修改分桌 ==== */
+var _seatAdj=null;
+function adjSeatOpen(kind){
+  var t=curT();if(!t)return;
+  var r=csvTargetRound(t,kind);
+  if(!r){uiAlert('没有未确认的轮次，无法调整分桌');return;}
+  var pick={};
+  r.tables.forEach(function(tb,ti){tb.players.forEach(function(pid){pick[pid]=ti;});});
+  _seatAdj={kind:kind,roundNo:r.roundNo,pick:pick,slots:r.tables.length};
+  openModal(adjSeatBox());
+}
+function adjSeatBox(){
+  var t=curT(),r=csvTargetRound(t,_seatAdj.kind);
+  var h='<div class="modal-box" style="max-width:560px">';
+  h+='<h3 style="margin:0 0 6px">手动修改分桌（第'+r.roundNo+'轮）</h3>';
+  h+='<p style="margin:0 0 8px;font-size:12px;color:#6b7280">每桌至少 2 人、最多 4 人。把人移到「➕ 新建桌」即拆出新桌；某桌人被移空则该桌消失。已完成录入的成绩跟着选手走。</p>';
+  h+='<div style="max-height:380px;overflow:auto"><table style="margin:0"><tr><th>选手</th><th>所在桌</th></tr>';
+  r.tables.forEach(function(tb){
+    tb.players.forEach(function(pid){
+      var p=getP(t,pid);
+      h+='<tr><td style="text-align:left">'+esc(p?p.name:'（已删除）')+'</td><td><select onchange="adjSeatSet(\''+pid+'\',this.value)">';
+      for(var k=0;k<_seatAdj.slots;k++)
+        h+='<option value="'+k+'"'+(Number(_seatAdj.pick[pid])===k?' selected':'')+'>桌'+(k+1)+'</option>';
+      h+='<option value="new">➕ 新建桌</option></select></td></tr>';
+    });
+  });
+  h+='</table></div>';
+  h+='<div class="modal-actions" style="margin-top:12px">';
+  h+='<button class="green" onclick="adjSeatSave()">✔ 保存分桌</button>';
+  h+='<button class="gray" onclick="closeModal()">取消</button></div></div>';
+  return h;
+}
+function adjSeatSet(pid,val){
+  if(!_seatAdj)return;
+  if(val==='new'){_seatAdj.pick[pid]=_seatAdj.slots;_seatAdj.slots++;}
+  else _seatAdj.pick[pid]=Number(val);
+  openModal(adjSeatBox());
+}
+function adjSeatSave(){
+  var t=curT(),adj=_seatAdj;
+  if(!t||!adj)return;
+  var r=csvTargetRound(t,adj.kind);
+  if(!r){uiAlert('轮次已变化，请重新打开');return;}
+  var groups={};
+  r.tables.forEach(function(tb,ti){
+    tb.players.forEach(function(pid){
+      var k=(adj.pick[pid]==null)?ti:Number(adj.pick[pid]);
+      (groups[k]=groups[k]||[]).push(pid);
+    });
+  });
+  var bad=[];
+  Object.keys(groups).forEach(function(k){
+    var n=groups[k].length;
+    if(n<2||n>4)bad.push('桌'+(Number(k)+1)+'（'+n+' 人）');
+  });
+  if(bad.length){uiAlert('每桌只能 2~4 人，请先调整：'+bad.join('、'));return;}
+  if(!Object.keys(groups).length){uiAlert('每桌都空了，至少要留一桌。');return;}
+  var old={};
+  r.tables.forEach(function(tb){for(var pid in tb.detail)old[pid]=tb.detail[pid];});
+  var isQual=adj.kind==='qual';
+  var nt=[];
+  Object.keys(groups).sort(function(a,b){return a-b;}).forEach(function(k){
+    var players=groups[k],d={};
+    players.forEach(function(pid){
+      d[pid]=old[pid]||(isQual?defaultQualDetail(getP(t,pid)):defaultElimDetail(getP(t,pid)));
+    });
+    nt.push({players:players,detail:d});
+  });
+  r.tables=nt;
+  if(isQual)computeQualRound(t,r);else computeElimRound(t,r);
+  saveData();render();
+  _seatAdj=null;closeModal();
+  uiAlert('分桌已更新：共 '+nt.length+' 桌（'+nt.map(function(x){return x.players.length;}).join(' / ')+'）。');
+}
+
+function setQualFix(pid,val){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;if(!q)return;
+  q.corrections=q.corrections||{};
+  var v=String(val).trim();
+  if(v===''||num(v)===0)delete q.corrections[pid];
+  else q.corrections[pid]=num(v);
+  saveData();renderKeepView();
+}
+function qualRankHTML(t){
+  var q=t.qualifier;
+  if(!q.rounds.length)return '<div class="hint">还没有轮次，请先到「录入/分桌」开始第 1 轮。</div>';
+  var cum=computeQualCumulative(t);
+  var hl=q.rankConfirmed?(new Set(q.promoted||[])):livePromotedSet(t);
+  var eqr=effectiveQualRanking(t);
+    var h='<div class="toolbar no-print">';
+  var qLast=q.rounds[q.rounds.length-1];
+  if(!q.rankConfirmed&&qLast&&qLast.confirmed&&q.rounds.length<qualMaxRounds(t)){
+    h+='<button class="green" onclick="nextQualRound()">➕ 下一轮分桌</button>';
+  }
+  if(q.rankConfirmed){
+    h+='<button class="green" onclick="seatElimFromPromoted()">➡ 进入淘汰赛</button>';
+    h+='<button class="gray" onclick="reopenQualRank()">返回修改晋级赛</button>';
+  }else{
+    if(q.rounds.every(function(r){return r.confirmed;})){
+      h+='<button class="orange" onclick="confirmQualRank()">✔ 生成晋级名单</button>';
+    }else{
+      var un=q.rounds.filter(function(r){return !r.confirmed;}).length;
+      h+='<span class="muted">还有 '+un+' 轮未确认，确认后才能生成晋级名单。</span>';
+    }
+  }
+  h+='<button class="gray" onclick="resetRanking()">↻ 重置为自动排名</button>';
+
+h+='<div class="flex-table"><table>';
+  h+='<tr><th>排名</th><th>昵称</th>';
+  q.rounds.forEach(function(r,i){h+='<th>第'+(i+1)+'轮</th>';});
+  h+='<th class="no-print">修正</th><th>当前总得分</th><th>轮均顺位</th><th>一位</th><th>二位</th><th>三位</th><th>四位</th><th>迟到</th><th>缺席</th><th>轮top次数</th><th>轮top加分</th><th>特殊加分</th><th class="no-print">操作</th></tr>';
+  cum.forEach(function(m,i){
+    var p=getP(t,m.pid);
+    var isProm=hl.has(m.pid);
+    var isSub=isProm&&eqr.indexOf(m.pid)>=CONFIG.PROMOTE_TO_ELIM;
+    var cls=[p.disqualified?'disqualified':(p.withdrawn?'withdrawn':''),isProm?'promote':''].join(' ').trim();
+    h+='<tr class="'+cls+'">';
+    h+='<td>'+(i+1)+'</td>';
+    h+='<td style="text-align:left">'+esc(p.name)+' '+(isSub?'<span class="tag sub">递补</span>':'')+tagsOf(t,p)+'</td>';
+    q.rounds.forEach(function(r,ri){var v=m.perRound[ri];h+='<td>'+(v==null?'—':fmt(v))+'</td>';});
+    h+='<td class="no-print"><input class="mini" type="number" step="any" style="width:64px" value="'+(m.fix?fmt(m.fix):'')+'" placeholder="0" onchange="setQualFix(\''+m.pid+'\',this.value)"></td>';
+    h+='<td><b>'+fmt(m.total)+'</b></td>';
+    h+='<td>'+avgRank(m)+'</td>';
+    h+='<td>'+m.one+'</td><td>'+m.two+'</td><td>'+m.three+'</td><td>'+m.four+'</td>';
+    h+='<td>'+m.late+'</td><td>'+m.absent+'</td><td>'+m.topCount+'</td><td>'+fmt(m.topBonusSum)+'</td><td>'+fmt(m.specialSum)+'</td>';
+    h+='<td class="no-print">';
+    h+='<button class="mini '+(p.withdrawn?'green':'red')+'" onclick="toggleWithdraw(\''+m.pid+'\')">'+(p.withdrawn?'恢复':'退赛')+'</button> ';
+    h+='<button class="mini gray" onclick="moveRank(\''+m.pid+'\',-1)">↑</button><button class="mini gray" onclick="moveRank(\''+m.pid+'\',1)">↓</button>';
+    h+='</td></tr>';
+  });
+  h+='</table></div>';
+  return h;
+}
+function avgRank(m){
+  var n=m.one+m.two+m.three+m.four;
+  if(!n)return '—';
+  var sum=m.one+2*m.two+3*m.three+4*m.four;
+  return fmt(sum/n);
+}
+function moveRank(pid,dir){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;
+  var auto=computeQualCumulative(t).map(function(m){return m.pid;});
+  var list=q.manualRanking&&q.manualRanking.length?q.manualRanking.slice():auto.slice();
+  var i=list.indexOf(pid);
+  if(i<0)return;
+  var j=i+dir;
+  if(j<0||j>=list.length)return;
+  var tmp=list[i];list[i]=list[j];list[j]=tmp;
+  q.manualRanking=list;
+  saveData();render();
+}
+function resetRanking(){
+  var t0=curT();
+  if(t0&&t0.qualifier)t0.qualifier.corrections={};
+  var t=curT();if(!t)return;
+  uiConfirm('重置为自动排名？（清除手动微调）',function(){
+    t.qualifier.manualRanking=null;saveData();render();
+  });
+}
+function rollbackRound(kind){
+  var t=curT();if(!t)return;
+  uiConfirm(kind==='qual'?'回退晋级赛？（撤销最近已确认的轮次，保留该轮成绩可修改后再次确认；其后轮次与已生成排名一并撤销）':'回退淘汰赛？（撤销最近已确认的轮次并删除其后轮次，保留成绩可修改结果后重新确认；最终排名一并撤销）',function(){
+    if(kind==='qual'){
+      var q=t.qualifier;
+      var i=q.rounds.length-1;
+      while(i>=0&&!q.rounds[i].confirmed)i--;
+      if(i<0){uiAlert('没有已确认的轮次可回退');return;}
+      q.rounds=q.rounds.slice(0,i+1);
+      q.rounds[i].confirmed=false;
+      q.finalRanking=null;q.manualRanking=null;q.promoted=null;q.notPromoted=null;
+      q.rankConfirmed=null;q.qualified=null;t.elimination=null;
+      APP.viewQualRound=q.rounds[i].roundNo;
+      saveData();render();
+      uiAlert('第'+q.rounds[i].roundNo+'轮已撤销确认，可直接修改结果，确认后（跳转排名）可再次生成晋级名单。');
+    }else{
+      var e=t.elimination;
+      if(!e||!e.rounds.length){uiAlert('没有可回退的轮次');return;}
+      var j=e.rounds.length-1;
+      while(j>=0&&!e.rounds[j].confirmed)j--;
+      if(j<0){uiAlert('没有已确认的轮次可回退');return;}
+      var no=e.rounds[j].roundNo;
+      for(var k=j;k<e.rounds.length;k++){e.rounds[k].confirmed=false;e.rounds[k].advanced=[];}
+
+      e.finalRanking=null;e.manualFinal=null;
+      APP.viewElimRound=no;
+      saveData();render();
+      uiAlert('第'+no+'轮（及之后轮次）已撤销确认，可修改结果后再次确认；其后轮次数据保留。');
+    }
+  });
+}
+function viewQualPromoted(t){
+  var q=t.qualifier;
+  var eqr=effectiveQualRanking(t);
+  // 实时晋级名单：按名次取前16名活跃选手（退赛/取消资格不占名额，自动递补）
+  var promoted=[];
+  for(var i=0;i<eqr.length&&promoted.length<CONFIG.PROMOTE_TO_ELIM;i++){
+    var p=getP(t,eqr[i]);
+    if(p&&!p.withdrawn&&!p.disqualified)promoted.push(eqr[i]);
+  }
+  var h='<div class="card"><h2>晋级名单（'+promoted.length+' 人）</h2>';
+  h+='<div class="hint">前 '+CONFIG.PROMOTE_TO_ELIM+' 名晋级淘汰赛；退赛/取消资格者不占名额，自动递补。</div>';
+  h+='<div class="flex-table"><table><tr><th>名次</th><th>昵称</th><th>状态</th><th>说明</th><th class="no-print">操作</th></tr>';
+  promoted.forEach(function(pid,i){
+    var p=getP(t,pid);
+    var isSub=eqr.indexOf(pid)>=CONFIG.PROMOTE_TO_ELIM;
+    h+='<tr class="promote"><td>'+(i+1)+'</td><td style="text-align:left">'+esc(p.name)+' '+(isSub?'<span class="tag sub">递补</span>':'')+tagsOf(t,p)+'</td>';
+    h+='<td>'+playerStatusTag(p)+'</td><td>'+(isSub?'递补晋级':'晋级')+'</td>';
+    h+='<td class="no-print"><button class="mini '+(p.withdrawn?'green':'red')+'" onclick="toggleWithdraw(\''+pid+'\')">'+(p.withdrawn?'恢复':'退赛')+'</button></td></tr>';
+  });
+  h+='</table></div>';
+  h+='<div class="toolbar no-print"><button class="green" onclick="seatElimFromPromoted()">进入淘汰赛（按上方名单分桌）</button>';
+  h+='<button class="gray" onclick="reopenQualRank()">返回修改晋级赛</button></div>';
+  h+='</div>';
+  return h;
+}
+function seatElimFromPromoted(){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;
+  if(!q.rankConfirmed||!q.promoted){uiAlert('请先在晋级赛确认排名');return;}
+  if(t.elimination&&t.elimination.rounds.length){uiAlert('淘汰赛已开始，无法重新分桌');return;}
+  var eqr=q.finalRanking||effectiveQualRanking(t);
+  var promoted=[];
+  for(var i=0;i<eqr.length&&promoted.length<CONFIG.PROMOTE_TO_ELIM;i++){
+    var p=getP(t,eqr[i]);
+    if(p&&!p.withdrawn&&!p.disqualified)promoted.push(eqr[i]);
+  }
+  q.promoted=promoted;
+  if(!t.elimination)t.elimination={rounds:[],finalRanking:null,manualFinal:null};
+  autoElimSeat(t,0);
+  APP.viewElimRound=1;
+  APP.step='elimination';
+  saveData();render();
+}
+function confirmQualRank(){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;
+  if(!q.rounds.length){uiAlert('还没有晋级赛轮次');return;}
+  if(!q.rounds.every(function(r){return r.confirmed;})){var un=q.rounds.filter(function(r){return !r.confirmed;}).length;uiAlert('还有 '+un+' 轮未确认结果');return;}
+  var eqr=effectiveQualRanking(t);
+  q.finalRanking=eqr.slice();
+  var promoted=[];
+  for(var i=0;i<eqr.length&&promoted.length<CONFIG.PROMOTE_TO_ELIM;i++){
+    var p=getP(t,eqr[i]);
+    if(p&&!p.withdrawn&&!p.disqualified)promoted.push(eqr[i]);
+  }
+  q.promoted=promoted;
+  q.qualified=promoted.slice();
+  q.rankConfirmed=true;
+  q.notPromoted=eqr.filter(function(pid){return promoted.indexOf(pid)<0;}).filter(function(pid){var p=getP(t,pid);return p&&!p.withdrawn&&!p.disqualified;}).map(function(pid){return {pid:pid,rank:eqr.indexOf(pid)+1};});
+  saveData();render();
+  uiAlert('晋级名单已生成（'+promoted.length+' 人）。');
+}
+function reopenQualRank(){
+  var t=curT();if(!t)return;
+  uiConfirm('返回修改晋级赛？（撤销排名确认，晋级名单、淘汰赛将一并清除）',function(){
+    var q=t.qualifier;
+    q.rankConfirmed=null;q.promoted=null;q.notPromoted=null;q.qualified=null;
+    t.elimination=null;
+    saveData();render();
+  });
+}
+function buildRound(){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;
+  if(q.rounds.length){uiAlert('已有轮次，请用「➕ 下一轮分桌」');return;}
+  var pool=shuffle(activePlayers(t).map(function(p){return p.id;}));
+  if(!pool.length){uiAlert('选手池为空，请先添加选手');return;}
+  q.rounds.push(makeQualRound(t,1,pool));
+  APP.viewQualRound=1;
+  saveData();render();
+}
+function nextQualRound(){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;
+  var last=q.rounds[q.rounds.length-1];
+  if(!last||!last.confirmed){uiAlert('上一轮尚未确认');return;}
+  if(q.rounds.length>=qualMaxRounds(t)){uiAlert('已达晋级赛最大轮数（'+qualMaxRounds(t)+' 轮）');return;}
+  var cum=computeQualCumulative(t);
+  var pool=cum.map(function(m){return m.pid;}).filter(function(pid){var p=getP(t,pid);return p&&!p.withdrawn&&!p.disqualified;});
+  var newNo=q.rounds.length+1;
+  q.rounds.push(makeQualRound(t,newNo,pool));
+  APP.viewQualRound=newNo;
+  saveData();render();
+}
+function confirmQualRound(){
+  var t=curT();if(!t)return;
+  var q=t.qualifier;
+  var cur=q.rounds[q.rounds.length-1];
+  if(!cur){uiAlert('还没有轮次');return;}
+  if(cur.confirmed){uiAlert('当前轮已确认');return;}
+  computeQualRound(t,cur);
+  cur.confirmed=true;
+  APP.ppTab='rank';
+  saveData();render();
+}
+function makeQualRound(t,roundNo,pool){
+  var tables=seatTables(pool).map(function(players){return {players:players,detail:{}};});
+  // 兜底：确保无 <3 人桌（总人数 2/5 除外）
+  tables.forEach(function(tb){tb.players.forEach(function(pid){tb.detail[pid]=defaultQualDetail(getP(t,pid));});});
+  return {roundNo:roundNo,confirmed:false,fixed:null,tables:tables};
+}
+function seatTables(pool){
+  var N=pool.length,tables=[];
+  if(N<=0)return tables;
+  var b=[0,3,2,1][N%4];
+  var a=(N-3*b)/4;
+  if(a<0||!Number.isInteger(a)){
+    if(N===2)return [[pool[0],pool[1]]];
+    if(N===5)return [[pool[0],pool[1],pool[2]],[pool[3],pool[4]]];
+    return [pool.slice()];
+  }
+  var i=0,t;
+  for(t=0;t<a;t++){tables.push(pool.slice(i,i+4));i+=4;}
+  for(t=0;t<b;t++){tables.push(pool.slice(i,i+3));i+=3;}
+  return tables;
+}
+function rebalanceRoundTables(t,round,kind){
+  // 按当前实际在座名单重新配平桌位：保持 4/3 人桌（仅总人数 2/5 时允许 2 人桌），杜绝退赛产生的 2 人桌
+  var flat=[],details={};
+  round.tables.forEach(function(tb){
+    tb.players.forEach(function(pid){flat.push(pid);});
+    for(var k in tb.detail)details[k]=tb.detail[k];
+  });
+  if(!flat.length){round.tables=[];return;}
+  round.tables=seatTables(flat).map(function(players){
+    var d={};
+    players.forEach(function(pid){
+      d[pid]=details[pid]||(round.stash&&round.stash[pid])||(kind==='qual'?defaultQualDetail(getP(t,pid)):defaultElimDetail(getP(t,pid)));
+    });
+    return {players:players,detail:d};
+  });
+  if(round.pool)round.pool=flat.slice();
+}
+
+function qualTableIssues(r,ti){
+  var tb=r.tables[ti],issues=[];
+  for(var h=0;h<2;h++){
+    var seen={},sum=0,ac=0;
+    tb.players.forEach(function(pid){
+      var d=tb.detail[pid];if(!d||!d.ranks)return;
+      var rk=Number(d.ranks[h]);
+      if(rk>=1&&rk<=4){
+        if(seen[rk])issues.push('半庄'+(h+1)+' 顺位'+rk+'重复');
+        seen[rk]=true;
+      }
+      sum+=Number(d.scores[h]||0);ac++;
+    });
+    if(ac>=2&&Math.abs(sum)>0.001)issues.push('半庄'+(h+1)+' 得分和≠0');
+  }
+  return issues;
+}
+function elimTableIssues(r,ti){
+  var tb=r.tables[ti],issues=[],hf=r.roundNo>=3?CONFIG.ELIM_MATCHES_PER_ROUND:CONFIG.ELIM_MATCHES_PER_ROUND;
+  for(var h=0;h<hf;h++){
+    var seen={},sum=0,ac=0;
+    tb.players.forEach(function(pid){
+      var d=tb.detail[pid];if(!d||!d.ranks)return;
+      var rk=Number(d.ranks[h]);
+      if(rk>=1&&rk<=4){
+        if(seen[rk])issues.push('半庄'+(h+1)+' 顺位'+rk+'重复');
+        seen[rk]=true;
+      }
+      sum+=Number(d.scores[h]||0);ac++;
+    });
+    if(ac>=2&&Math.abs(sum)>0.001)issues.push('半庄'+(h+1)+' 得分和≠0');
+  }
+  return issues;
+}
+function fixTableSizes(t,round,kind){
+  // 只在必要时配平：删空桌；若出现 <3 人桌（总人数>5）或 >4 人桌，则重新均分为 4/3 人桌。
+  // 合法时完全不动作，避免无谓重排座位。成绩/标记随人迁移。
+  round.tables = round.tables.filter(function(tb){return tb.players.length>0;});
+  var total = round.tables.reduce(function(a,tb){return a+tb.players.length;},0);
+  if(total<=5)return;
+  var bad = round.tables.some(function(tb){return tb.players.length<3||tb.players.length>4;});
+  if(!bad)return;
+  var flat=[],details={};
+  round.tables.forEach(function(tb){
+    tb.players.forEach(function(pid){flat.push(pid);});
+    for(var k in tb.detail)details[k]=tb.detail[k];
+  });
+  round.tables = seatTables(flat).map(function(players){
+    var d={};
+    players.forEach(function(pid){
+      d[pid]=details[pid]||(round.stash&&round.stash[pid])||(kind==='qual'?defaultQualDetail(getP(t,pid)):defaultElimDetail(getP(t,pid)));
+    });
+    return {players:players,detail:d};
+  });
+  if(round.pool)round.pool=flat.slice();
+}
+function seatSnake(ranked,snake){
+  return snake.map(function(grp){return grp.map(function(pos){return ranked[pos-1];}).filter(Boolean);});
+}
+function qualMaxRounds(t){return activePlayers(t).length>64?CONFIG.QUALIFY_ROUNDS_LARGE:CONFIG.QUALIFY_ROUNDS_SMALL;}
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=a[i];a[i]=a[j];a[j]=tmp;
+  }
+  return a;
+}
+function computeQualRound(t,round){
+  var tieBonus=[0,CONFIG.EXTRA_BONUS_FIRST,CONFIG.EXTRA_BONUS_TIE2,CONFIG.EXTRA_BONUS_TIE3,CONFIG.EXTRA_BONUS_TIE4];
+  round.tables.forEach(function(tb){
+    var maxScore=-Infinity,maxCount=0;
+    tb.players.forEach(function(pid){
+      var d=tb.detail[pid];if(!d)return;
+      var p=getP(t,pid);
+      var hasScore=!!(d.scores&&(d.scores[0]||d.scores[1]));
+      if(p.withdrawn&&!hasScore){
+        d._total=-Infinity;d._isTop=false;d._roundTotal=0;
+        return;
+      }
+      var tot=(d.scores?num(d.scores[0]):0)+(d.scores?num(d.scores[1]):0);
+      d._total=tot;
+      // 轮top归属分：半庄分和 + 特殊加分 - 扣分（决定同桌轮top归属）
+      var topScore=tot+(d.special||0)-(d.penalty||0);
+      if(!p.withdrawn){
+        if(topScore>maxScore){maxScore=topScore;maxCount=1;}
+        else if(topScore===maxScore){maxCount++;}
+      }
+    });
+    tb.players.forEach(function(pid){
+      var d=tb.detail[pid];if(!d)return;
+      var p=getP(t,pid);
+      var ts=(d.scores?num(d.scores[0])+num(d.scores[1]):0)+(d.special||0)-(d.penalty||0);
+      var isTop=!p.withdrawn&&ts===maxScore&&maxScore>-Infinity;
+      d._isTop=isTop;
+      d.topBonus=(d.topBonusManual!=null)?d.topBonusManual:(isTop?tieBonus[maxCount]||0:0);
+      var hasScore=!!(d.scores&&(d.scores[0]||d.scores[1]));
+      d._roundTotal=hasScore?((d.scores?num(d.scores[0])+num(d.scores[1]):0)+(d.special||0)+d.topBonus-(d.penalty||0)):0;
+    });
+  });
+}
+function cmpQual(a,b){
+  if(b.total!==a.total)return b.total-a.total;
+  if(b.one!==a.one)return b.one-a.one;
+  if(b.two!==a.two)return b.two-a.two;
+  if(b.three!==a.three)return b.three-a.three;
+  return a.four-b.four;
+}
+function computeQualCumulative(t){
+  var q=t.qualifier;
+  var map={};
+  t.players.forEach(function(p){map[p.id]={pid:p.id,total:0,perRound:{},one:0,two:0,three:0,four:0,late:0,absent:0,topCount:0,topBonusSum:0,specialSum:0};});
+  q.rounds.forEach(function(r,ri){
+    r.tables.forEach(function(tb){
+      tb.players.forEach(function(pid){
+        var d=tb.detail[pid];if(!d)return;
+        var m=map[pid];if(!m)return;
+        if(d._roundTotal===undefined)return;
+        m.perRound[ri]=d._roundTotal;
+        m.total+=d._roundTotal;
+        for(var h=0;h<2;h++){
+          var rk=d.ranks?num(d.ranks[h]):0;
+          if(rk===1)m.one++;else if(rk===2)m.two++;else if(rk===3)m.three++;else if(rk===4)m.four++;
+        }
+        m.late+=(d.late||0);m.absent+=(d.absent||0);
+        if(d._isTop&&(d.topBonusManual!=null?d.topBonusManual:d.topBonus)>0)m.topCount++;
+        m.topBonusSum+=(d.topBonusManual!=null?d.topBonusManual:(d.topBonus||0));
+        m.specialSum+=(d.special||0);
+      });
+    });
+  });
+  var arr=Object.keys(map).map(function(k){return map[k];});
+  // 分数修正：只叠加到「当前总得分」上，参与排名与导出；
+  // 轮top归属在 computeQualRound 里按每半庄分数+特殊-扣分判定，与此无关，故不会被修正影响。
+  var fix=q.corrections||{};
+  arr.forEach(function(m){var f=num(fix[m.pid]);m.fix=f;if(f)m.total+=f;});
+  arr.sort(cmpQual);
+  var auto=arr.map(function(m){return m.pid;});
+  // 晋级淘汰赛判定（并集红线）：前16名「活跃」选手（退赛/DQ 不占名额顺延）+ 冻结晋级集合
+  // 勿用 auto 前16 直接判定——否则退赛高分者会被误判为晋级、不沉底、拿线性分
+  var reached=new Set();
+  var actCount=0;
+  for(var i=0;i<auto.length&&actCount<CONFIG.PROMOTE_TO_ELIM;i++){
+    var pp=getP(t,auto[i]);
+    if(pp&&!pp.withdrawn&&!pp.disqualified){reached.add(auto[i]);actCount++;}
+  }
+  (q.qualified||q.promoted||[]).forEach(function(pid){reached.add(pid);});
+  function bucket(m){
+    var p=getP(t,m.pid);
+    if(p.disqualified)return 2;
+    if(p.withdrawn&&!reached.has(m.pid))return 1;
+    return 0;
+  }
+  arr.sort(function(a,b){
+    var ba=bucket(a),bb=bucket(b);
+    if(ba!==bb)return ba-bb;
+    return cmpQual(a,b);
+  });
+  return arr;
+}
+function effectiveQualRanking(t){
+  var q=t.qualifier;
+  if(q.manualRanking&&q.manualRanking.length)return q.manualRanking;
+  return computeQualCumulative(t).map(function(m){return m.pid;});
+}
+function qualReachedSet(t){
+  var set=new Set();
+  var eqr=effectiveQualRanking(t);
+  var act=0;
+  for(var i=0;i<eqr.length&&act<CONFIG.PROMOTE_TO_ELIM;i++){
+    var p=getP(t,eqr[i]);
+    if(p&&!p.withdrawn&&!p.disqualified){set.add(eqr[i]);act++;}
+  }
+  var q=t.qualifier;
+  (q.qualified||q.promoted||[]).forEach(function(pid){set.add(pid);});
+  return set;
+}
+function livePromotedSet(t){
+  var eqr=effectiveQualRanking(t);
+  var set=new Set();
+  for(var i=0;i<eqr.length&&set.size<CONFIG.PROMOTE_TO_ELIM;i++){
+    var p=getP(t,eqr[i]);
+    if(p&&!p.withdrawn&&!p.disqualified)set.add(eqr[i]);
+  }
+  return set;
+}
+function qualPlayedRound(t,pid){
+  if(!t||!t.qualifier)return -1;
+  var deep=-1;
+  t.qualifier.rounds.forEach(function(r,ri){
+    r.tables.forEach(function(tb){
+      var d=tb.detail[pid];
+      if(d&&d.scores&&(d.scores[0]||d.scores[1]))deep=ri;
+    });
+  });
+  return deep;
+}
+function isRoundPlayed(r){
+  for(var ti=0;ti<r.tables.length;ti++){
+    var tb=r.tables[ti];
+    for(var k in tb.detail){
+      var d=tb.detail[k];
+      if(d&&d.scores&&(d.scores.some(function(s){return s!==0;})||d.ranks.some(function(s){return s!==0;})))return true;
+    }
+  }
+  return false;
+}
+/* 某一轮是否已经开打（有人录了成绩） */
+function roundHasScores(kind,r){
+  var n=kind==='qual'?2:3;
+  return r.tables.some(function(tb){
+    return tb.players.some(function(pid){
+      var d=tb.detail[pid];if(!d)return false;
+      for(var h=0;h<n;h++){ if(num(d.scores&&d.scores[h])!==0||num(d.ranks&&d.ranks[h])!==0)return true; }
+      return false;
+    });
+  });
+}
+/* 返回「已开打但还没确认」的轮次所属阶段；没有则返回 null */
+function blockedRoundKind(t){
+  var q=t.qualifier;
+  if(q&&q.rounds.some(function(r){return !r.confirmed&&roundHasScores('qual',r);}))return 'qual';
+  if(t.elimination&&t.elimination.rounds.some(function(r){return !r.confirmed&&roundHasScores('elim',r);}))return 'elim';
+  return null;
+}
+function toggleWithdraw(pid){
+  var t=curT();if(!t)return;
+  var p=getP(t,pid);if(!p)return;
+  // 退赛只能在轮次之间：本轮一旦开打（有成绩录入），退赛就会让同桌临时换人。
+  // 已分桌但还没开打的轮次不算"本轮进行中"，照常允许（此时调整座位无影响）。
+  if(!p.withdrawn&&blockedRoundKind(t)){
+    uiAlert('本轮已经开打了（有成绩录入），现在退赛会让同桌临时换人、影响已打了一半的成绩。\n\n请先到「录入/分桌」确认本轮结果（每轮结束），再在下一轮开始之前点退赛。');
+    return;
+  }
+  p.withdrawn=!p.withdrawn;
+  var q=t.qualifier;
+  if(p.withdrawn){
+    p.elimPlayed=elimPlayedRound(t,pid);
+    var lvl=-1;
+    if(t.elimination){
+      for(var ri=0;ri<t.elimination.rounds.length;ri++){
+        var r=t.elimination.rounds[ri];
+        if((r.pool&&r.pool.indexOf(pid)>=0)||(r.advanced&&r.advanced.indexOf(pid)>=0)){lvl=ri;break;}
+      }
+    }
+    if(lvl<0){
+      lvl=qualReachedSet(t).has(pid)?0:-1;
+    }
+    p.elimReached=lvl>=0?lvl:null;
+    // 实时更新「已确认轮」的晋级名单：退赛者移出，由该轮未晋级活跃者中成绩最高者递补
+    // （晋级选手确认后立刻显示递补选手；快照 elimReached 已在上方记录，不受影响）
+    if(t.elimination){
+      t.elimination.rounds.forEach(function(r){
+        if(!r.confirmed)return;
+        var idx=r.advanced.indexOf(pid);
+        if(idx<0)return;
+        r.advanced.splice(idx,1);
+        var advSet={};
+        r.advanced.forEach(function(p2){advSet[p2]=true;});
+        var best=null;
+        r.tables.forEach(function(tb){
+          tb.players.forEach(function(p2){
+            if(advSet[p2]||p2===pid)return;
+            var pp=getP(t,p2);
+            if(pp&&!pp.withdrawn&&!pp.disqualified){
+              var sc=tbTotal(r,p2);
+              if(!best||sc>best.score)best={pid:p2,score:sc};
+            }
+          });
+        });
+        if(best){
+          r.advanced.push(best.pid);
+          r.tables.forEach(function(tb){
+            if(tb.detail[best.pid])tb.detail[best.pid]._sub=true;  // 递补标记（晋级选手表显示）
+          });
+        }
+      });
+    }
+    if(q){
+      q.rounds.forEach(function(r){
+        if(r.confirmed)return;
+        r.tables.forEach(function(tb){
+          var i=tb.players.indexOf(pid);
+          if(i>=0){r.stash=r.stash||{};r.stash[pid]=tb.detail[pid];tb.players.splice(i,1);delete tb.detail[pid];}
+        });
+      });
+    }
+    if(t.qualifier)t.qualifier.rounds.forEach(function(r){if(!r.confirmed)fixTableSizes(t,r,'qual');});
+    if(t.elimination){
+      t.elimination.rounds.forEach(function(r,ri){
+        if(r.confirmed)return;
+        r.tables.forEach(function(tb){
+          var i=tb.players.indexOf(pid);
+          if(i>=0){
+            r.stash=r.stash||{};r.stash[pid]=tb.detail[pid];
+            tb.players.splice(i,1);
+            delete tb.detail[pid];
+            // 实时递补（无论该轮是否已开打，退赛即立刻补位显示）：
+            // 非首轮由上一轮未晋级活跃者中成绩最高者跨桌递补；
+            // 16 强（首轮）由晋级赛排名未入 16 强名单的活跃者按名次顺延递补
+            var seated={};
+            r.tables.forEach(function(tb2){tb2.players.forEach(function(pp){seated[pp]=true;});});
+            var sub=ri>0?elimReplacement(t,t.elimination.rounds[ri-1],seated):elim16Replacement(t,seated);
+            if(sub){
+              tb.players.push(sub);
+              tb.detail[sub]=defaultElimDetail(getP(t,sub));
+              tb.detail[sub]._sub=true;   // 递补标记（实时显示）
+            }
+          }
+        });
+      });
+      t.elimination.rounds.forEach(function(r){if(!r.confirmed)fixTableSizes(t,r,'elim');});
+    }
+  }else{
+    p.elimReached=null;p.elimPlayed=null;
+    // 恢复：把选手加回未确认轮的桌位并重新配平
+    if(t.qualifier)t.qualifier.rounds.forEach(function(r){
+      if(r.confirmed||!r.tables.length)return;
+      var has=false;r.tables.forEach(function(tb){if(tb.players.indexOf(pid)>=0)has=true;});
+      if(!has){var tb0=r.tables[r.tables.length-1];tb0.players.push(pid);tb0.detail[pid]=(r.stash&&r.stash[pid])||defaultQualDetail(p);}
+    });
+    if(t.elimination)t.elimination.rounds.forEach(function(r){
+      if(r.confirmed||!r.tables.length)return;
+      var has=false;r.tables.forEach(function(tb){if(tb.players.indexOf(pid)>=0)has=true;});
+      if(!has){var tb0=r.tables[r.tables.length-1];tb0.players.push(pid);tb0.detail[pid]=(r.stash&&r.stash[pid])||defaultElimDetail(p);}
+    });
+    if(t.qualifier)t.qualifier.rounds.forEach(function(r){if(!r.confirmed)fixTableSizes(t,r,'qual');});
+    if(t.elimination)t.elimination.rounds.forEach(function(r){if(!r.confirmed)fixTableSizes(t,r,'elim');});
+  }
+  saveData();render();
+}
+/* ==== 模块7：淘汰赛 ==== */
+function viewElimination(t){
+  var elim=t.elimination;
+  if(!elim||!elim.rounds.length){
+    return '<div class="card"><div class="hint">淘汰赛尚未开始。请先到「晋级赛」确认排名并进入淘汰赛。</div>'+
+      '<div class="toolbar no-print"><button class="green" onclick="seatElimFromPromoted()">进入淘汰赛</button></div></div>';
+  }
+  var h='<div class="card"><div class="toolbar no-print">';
+  h+='<button class="gray" onclick="showExportModal(\'elim\')">🖨 导出（淘汰赛）</button>';
+  if(elim.rounds.length>1)h+='<button class="gray" onclick="rollbackRound(\'elim\')">↩ 回退上一轮</button>';
+  if(elim.finalRanking&&elim.finalRanking.length)h+='<button class="gray" onclick="rollbackFinal()">↩ 回退最终排名</button>';
+  h+='</div>';
+  // 轮次切换：多轮时按钮直达，避免一页划到底
+  var last=elim.rounds[elim.rounds.length-1];
+  var viewNo=APP.viewElimRound&&elim.rounds.some(function(r){return r.roundNo===APP.viewElimRound;})?APP.viewElimRound:last.roundNo;
+  if(elim.rounds.length>1){
+    h+='<div class="toolbar no-print"><span class="muted">查看轮次：</span>';
+    elim.rounds.forEach(function(r){
+      h+='<button class="mini '+(r.roundNo===viewNo?'orange':'gray')+'" onclick="setElimRoundView('+r.roundNo+')">'+shortRoundTitle(r.roundNo)+(r.roundNo===last.roundNo&&!r.confirmed?'·当前':'')+(r.confirmed?'':' ·未确认')+'</button>';
+    });
+    h+='</div>';
+  }
+  var vr=elim.rounds.find(function(r){return r.roundNo===viewNo;});
+  if(vr)h+=elimRoundHTML(t,vr);
+  if(elim.finalRanking&&elim.finalRanking.length)h+=finalRankingHTML(t);
+  h+='</div>';
+  return h;
+}
+function setElimRoundView(no){APP.viewElimRound=no;render();}
+function elimRoundHTML(t,r){
+  var isFinal=r.roundNo>=3;
+  var hasNext=r.roundNo<3&&t.elimination.rounds.some(function(x){return x.roundNo===r.roundNo+1;});
+  var h='<h3>'+roundTitle(r.roundNo)+(r.confirmed?'（已确认）':'')+'</h3>';
+  h+='<div class="toolbar no-print">';
+  if(!r.confirmed){
+    h+='<button class="green" onclick="confirmElimRound('+r.roundNo+')">✔ 确认本轮结果</button>';
+    h+='<button class="gray" onclick="startCsvImport(\'elim\')">📥 导入牌谱CSV</button>';
+    h+='<button class="gray" onclick="adjSeatOpen(\'elim\')">⇄ 手动修改分桌</button>';
+  }else{
+    if(isFinal){
+      if(!(t.elimination.finalRanking&&t.elimination.finalRanking.length)){
+        h+='<button class="orange" onclick="buildFinalRanking()">🏆 生成最终 1-16 名排名</button>';
+      }
+    }else{
+      if(!hasNext)h+='<button class="green" onclick="nextElimRound()">➡ 开始下一轮</button>';
+      h+='<button class="gray" onclick="reconfirmElimRound('+r.roundNo+')">↻ 重新确认</button>';
+    }
+  }
+  h+='</div>';
+  if(r.confirmed&&!isFinal){
+    h+='<table class="adv-table"><tr><th colspan="4">晋级选手（'+r.advanced.length+' 人）</th></tr><tr><th>✔</th><th>昵称</th><th>本轮总分</th><th class="no-print">操作</th></tr>';
+    r.advanced.forEach(function(pid){
+      var p=getP(t,pid);
+      var dsub=null;
+      r.tables.forEach(function(tbx){if(tbx.detail[pid])dsub=tbx.detail[pid];});
+      h+='<tr class="promote"><td>✔</td><td style="text-align:left">'+esc(p.name)+tagsOf(t,p)+(dsub&&dsub._sub?' <span class="tag sub">递补</span>':'')+'</td><td>'+fmt(tbTotal(r,pid))+'</td>';
+      h+='<td class="no-print">'+(p.withdrawn?'<button class="mini green" onclick="toggleWithdraw(\''+pid+'\')">恢复</button>':'<button class="mini red" onclick="toggleWithdraw(\''+pid+'\')">退赛</button>')+'</td></tr>';
+    });
+    h+='</table>';
+  }
+  r.tables.forEach(function(tb,ti){
+    var n=tb.players.length;
+    h+='<div class="tbl-cap">桌 '+(ti+1)+(n<4?' · '+n+'人桌':'')+'</div>';
+    h+='<div class="flex-table"><table>';
+    h+='<tr><th>昵称</th><th>桌号</th>';
+    for(var i=0;i<CONFIG.ELIM_MATCHES_PER_ROUND;i++)h+='<th>半庄'+(i+1)+'顺</th><th>半庄'+(i+1)+'分</th>';
+    h+='<th>特殊</th><th>扣分</th><th>迟到</th><th>缺席</th><th>小分</th><th>本轮总分</th>'+(r.confirmed&&!isFinal?'<th>晋级✔</th>':'')+(isFinal?'<th>加赛顺位</th><th>加赛得分</th>':'')+'</tr>';
+    tb.players.forEach(function(pid){
+      var p=getP(t,pid);var d=tb.detail[pid]||defaultElimDetail(p);
+      if(!p){h+='<tr class="withdrawn"><td colspan="20" style="text-align:left;color:#999;font-size:12px">⚠ 该选手已删除</td></tr>';return;}
+      var cls=p.withdrawn?'withdrawn':(p.disqualified?'disqualified':'');
+      h+='<tr class="'+cls+'">';
+      h+='<td style="text-align:left">'+esc(p.name)+tagsOf(t,p)+(d._sub?' <span class="tag sub">递补</span>':'')+'</td>';
+      h+='<td class="no-print">'+(r.confirmed?'<b>桌'+(ti+1)+'</b>':'<select onchange="setElimSeat('+r.roundNo+','+ti+',\''+pid+'\',this.value)">'+elimSeatOptions(t,r,pid)+'</select>')+(n<4?' <span class="tag three">'+n+'人桌</span>':'')+'</td>';
+      for(i=0;i<CONFIG.ELIM_MATCHES_PER_ROUND;i++){
+        h+='<td>'+(r.confirmed?fmt(d.ranks[i]):'<input class="mini" type="number" step="any" value="'+fmt(d.ranks[i])+'" onchange="setElimRank('+r.roundNo+','+ti+',\''+pid+'\','+i+',this.value)">')+'</td>';
+        h+='<td>'+(r.confirmed?fmt(d.scores[i]):'<input class="mini" type="number" step="any" value="'+fmt(d.scores[i])+'" onchange="setElimScore('+r.roundNo+','+ti+',\''+pid+'\','+i+',this.value)">')+'</td>';
+      }
+      h+='<td>'+(r.confirmed?fmt(d.special||0):'<input class="mini" type="number" step="any" value="'+fmt(d.special||0)+'" onchange="setElimField('+r.roundNo+','+ti+',\''+pid+'\',\'special\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.penalty||0):'<input class="mini" type="number" step="any" value="'+fmt(d.penalty||0)+'" onchange="setElimField('+r.roundNo+','+ti+',\''+pid+'\',\'penalty\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.late||0):'<input class="mini" type="number" step="any" value="'+fmt(d.late||0)+'" onchange="setElimField('+r.roundNo+','+ti+',\''+pid+'\',\'late\',this.value)">')+'</td>';
+      h+='<td>'+(r.confirmed?fmt(d.absent||0):'<input class="mini" type="number" step="any" value="'+fmt(d.absent||0)+'" onchange="setElimField('+r.roundNo+','+ti+',\''+pid+'\',\'absent\',this.value)">')+'</td>';
+      h+='<td>'+(d.ranks?d.ranks.map(fmt).join('·'):'')+'</td>';
+      h+='<td><b>'+fmt(d._total)+'</b></td>';
+      if(r.confirmed&&!isFinal){h+='<td>'+(r.advanced&&r.advanced.indexOf(pid)>=0?'✔':'')+'</td>';}
+      if(isFinal){
+        h+='<td>'+(r.confirmed?fmt(d.playoffRank):'<input class="mini" type="number" step="any" value="'+fmt(d.playoffRank)+'" onchange="setElimField('+r.roundNo+','+ti+',\''+pid+'\',\'playoffRank\',this.value)">')+'</td>';
+        h+='<td>'+(r.confirmed?fmt(d.playoffScore):'<input class="mini" type="number" step="any" value="'+fmt(d.playoffScore)+'" onchange="setElimField('+r.roundNo+','+ti+',\''+pid+'\',\'playoffScore\',this.value)">')+'</td>';
+      }
+      h+='</tr>';
+    });
+    if(!r.confirmed){var qi=elimTableIssues(r,ti);if(qi.length)h+='<div class="muted" style="color:#c2410c;padding:4px 0;font-size:12px">⚠ '+qi.join(' | ')+'</div>';}
+    h+='</table></div>';
+  });
+  return h;
+}
+function elimSeatOptions(t,r,pid){
+  var opts='';
+  r.tables.forEach(function(tb,ti){
+    tb.players.forEach(function(p2,i){
+      opts+='<option value="'+ti+'_'+i+'"'+(p2===pid?' selected':'')+'>桌'+(ti+1)+'·位'+(i+1)+'</option>';
+    });
+  });
+  return opts;
+}
+function getElimTable(t,roundNo,ti){
+  if(!t.elimination)return null;
+  var r=t.elimination.rounds.find(function(x){return x.roundNo===roundNo;});
+  if(!r)return null;
+  return {r:r,tb:r.tables[ti]};
+}
+function setElimSeat(roundNo,ti,pid,target){
+  var t=curT();if(!t)return;
+  var g=getElimTable(t,roundNo,ti);if(!g)return;
+  var parts=String(target).split('_');
+  var t2=parseInt(parts[0],10),i2=parseInt(parts[1],10);
+  if(t2===ti)return;
+  var tb=g.tb,tb2=g.r.tables[t2];
+  if(!tb||!tb2)return;
+  var i1=tb.players.indexOf(pid);if(i1<0)return;
+  var other=tb2.players[i2];
+  if(other==null)return;
+  tb.players[i1]=other;tb2.players[i2]=pid;
+  var d1=tb.detail[pid]||defaultElimDetail(getP(t,pid));
+  var d2=tb2.detail[other]||defaultElimDetail(getP(t,other));
+  delete tb.detail[pid];delete tb2.detail[other];
+  tb.detail[other]=d1;tb2.detail[pid]=d2;
+  [tb,tb2].forEach(function(x){x.players.forEach(function(pp){if(!x.detail[pp])x.detail[pp]=defaultElimDetail(getP(t,pp));});});
+  computeElimRound(t,g.r);
+  saveData();render();
+}
+function setElimRank(roundNo,ti,pid,h,val){
+  var t=curT();if(!t)return;
+  var g=getElimTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  d.ranks[h]=num(val)<1?1:(num(val)>4?4:num(val));
+  computeElimRound(t,g.r);saveData();renderKeepView();
+}
+function setElimScore(roundNo,ti,pid,h,val){
+  var t=curT();if(!t)return;
+  var g=getElimTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  d.scores[h]=num(val);
+  computeElimRound(t,g.r);saveData();renderKeepView();
+}
+function setElimField(roundNo,ti,pid,field,val){
+  var t=curT();if(!t)return;
+  var g=getElimTable(t,roundNo,ti);if(!g)return;
+  var d=g.tb.detail[pid];if(!d)return;
+  if(field==='late'||field==='absent')d[field]=Math.max(0,num(val));
+  else if(field==='playoffRank'||field==='playoffScore'){var v=String(val).trim();d[field]=v===''?null:num(v);}
+  else d[field]=num(val);
+  computeElimRound(t,g.r);saveData();renderKeepView();
+}
+function roundTitle(roundNo){
+  if(roundNo===1)return '第1轮：16进8';
+  if(roundNo===2)return '第2轮：8进4（半决赛）';
+  if(roundNo===3)return '第3轮：4强（决赛）';
+  return '第'+roundNo+'轮';
+}
+function autoElimSeat(t,idx){
+  var elim=t.elimination;
+  if(idx===0){
+    var pool=(t.qualifier.promoted||[]).filter(function(pid){
+      var p=getP(t,pid);
+      return p&&!p.withdrawn&&!p.disqualified;
+    });
+    // 16 强名额不足时：由晋级赛排名未入 16 强的活跃者顺延递补（标记递补）
+    var subPids=[];
+    if(pool.length<CONFIG.PROMOTE_TO_ELIM){
+      var seated={};
+      pool.forEach(function(pid){seated[pid]=true;});
+      var sub=elim16Replacement(t,seated);
+      while(sub&&pool.length<CONFIG.PROMOTE_TO_ELIM){
+        pool.push(sub);subPids.push(sub);seated[sub]=true;
+        sub=elim16Replacement(t,seated);
+      }
+    }
+    var tb=seatSnake(pool,CONFIG.SNAKE_16_8);
+    var round=makeElimRound(t,1,tb);
+    fixTableSizes(t,round,'elim');
+    markSubs(round,subPids);
+    elim.rounds.push(round);
+    return round;
+  }
+  var prev=elim.rounds[idx-1];
+  var need=idx===1?8:4;
+  // 分桌只排活跃选手：退赛/取消资格者不占新轮座位（红线）
+  var ranked=prev.advanced.slice().filter(function(pid){
+    var p=getP(t,pid);
+    return p&&!p.withdrawn&&!p.disqualified;
+  }).sort(function(a,b){return tbTotal(prev,b)-tbTotal(prev,a);});
+  // 名额不足时：由上一轮「未晋级活跃者」按上一轮成绩降序递补补齐（淘汰赛递补，标记递补）
+  var subPids=[];
+  if(ranked.length<need){
+    var seated={};
+    ranked.forEach(function(pid){seated[pid]=true;});
+    var sub=elimReplacement(t,prev,seated);
+    while(sub&&ranked.length<need){
+      ranked.push(sub);subPids.push(sub);
+      seated[sub]=true;
+      sub=elimReplacement(t,prev,seated);
+    }
+  }
+  var snake=idx===1?CONFIG.SNAKE_8_4:CONFIG.SNAKE_4_FINAL;
+  var tb=seatSnake(ranked,snake);
+  var round=makeElimRound(t,idx+1,tb);
+  fixTableSizes(t,round,'elim');
+  markSubs(round,subPids);
+  elim.rounds.push(round);
+  return round;
+}
+function markSubs(round,subPids){
+  if(!subPids||!subPids.length)return;
+  round.tables.forEach(function(tb){
+    subPids.forEach(function(pid){
+      if(tb.detail[pid])tb.detail[pid]._sub=true;
+    });
+  });
+}
+function elim16Replacement(t,seated){
+  // 16 强递补池：晋级赛排名中未入 16 强名单的活跃者（按名次顺延）
+  var qp=t.qualifier.promoted||[];
+  var inProm={};
+  qp.forEach(function(pid){inProm[pid]=true;});
+  var eqr=effectiveQualRanking(t);
+  for(var i=0;i<eqr.length;i++){
+    var pid=eqr[i];
+    if(inProm[pid]||seated[pid])continue;
+    var p=getP(t,pid);
+    if(p&&!p.withdrawn&&!p.disqualified)return pid;
+  }
+  return null;
+}
+function elimReplacement(t,prev,seated){
+  // 递补优先级：① 晋级名单中已标记的递补者(_sub)且未入座 → 与实际显示的递补选手完全一致；
+  // ② 其次选上一轮「未晋级活跃者」中成绩最高者
+  var advSet={};
+  (prev.advanced||[]).forEach(function(pid){advSet[pid]=true;});
+  var best=null,best2=null;
+  prev.tables.forEach(function(tb){
+    tb.players.forEach(function(pid){
+      if(seated[pid])return;
+      var p=getP(t,pid);
+      if(!p||p.withdrawn||p.disqualified)return;
+      var d=tb.detail[pid];
+      var sc=tbTotal(prev,pid);
+      if(advSet[pid]){
+        if(d&&d._sub&&(!best||sc>best.score))best={pid:pid,score:sc};
+      }else{
+        if(!best2||sc>best2.score)best2={pid:pid,score:sc};
+      }
+    });
+  });
+  return best?best.pid:(best2?best2.pid:null);
+}
+function shortRoundTitle(roundNo){
+  if(roundNo===1)return '16进8';
+  if(roundNo===2)return '半决赛';
+  if(roundNo===3)return '决赛';
+  return '第'+roundNo+'轮';
+}
+function makeElimRound(t,roundNo,tables){
+  var pool=tables.reduce(function(a,b){return a.concat(b);},[]);
+  var round={roundNo:roundNo,confirmed:false,pool:pool,advanced:[],tables:tables.map(function(players){return {players:players,detail:{}};})};
+  round.tables.forEach(function(tb){tb.players.forEach(function(pid){tb.detail[pid]=defaultElimDetail(getP(t,pid));});});
+  return round;
+}
+function nextElimRound(){
+  var t=curT();if(!t)return;
+  var elim=t.elimination;
+  if(!elim||!elim.rounds.length){uiAlert('还没有淘汰赛轮次');return;}
+  var last=elim.rounds[elim.rounds.length-1];
+  if(!last.confirmed){uiAlert('上一轮尚未确认');return;}
+  if(last.roundNo>=3){uiAlert('决赛已完成');return;}
+  if(elim.rounds.some(function(r){return r.roundNo===last.roundNo+1;})){uiAlert('下一轮已存在');return;}
+  autoElimSeat(t,last.roundNo);
+  APP.viewElimRound=last.roundNo+1;
+  saveData();render();
+}
+function computeElimRound(t,round){
+  round.tables.forEach(function(tb){
+    tb.players.forEach(function(pid){
+      var d=tb.detail[pid];if(!d)return;
+      var sum=(d.scores?d.scores.reduce(function(a,b){return a+num(b);},0):0)+(d.special||0)-(d.penalty||0);
+      d._total=sum;
+    });
+  });
+}
+function tbTotal(round,pid){
+  var tb=round.tables.find(function(x){return x.players.indexOf(pid)>=0;});
+  if(!tb)return 0;
+  var d=tb.detail[pid];
+  if(!d)return 0;
+  if(d._total===undefined)return 0;
+  return d._total;
+}
+function elimTableSorted(t,round,ti){
+  var tb=round.tables[ti];
+  return tb.players.slice().sort(function(a,b){
+    var pa=getP(t,a),pb=getP(t,b);
+    var wa=pa&&pa.withdrawn?1:0,wb=pb&&pb.withdrawn?1:0;
+    if(wa!==wb)return wa-wb;
+    return tbTotal(round,b)-tbTotal(round,a);
+  });
+}
+function rawSorted(t,round,ti){
+  // 原始成绩降序（退赛不沉底、不参与名次竞争判定时使用）；仅排除取消资格
+  var tb=round.tables[ti];
+  return tb.players.slice().filter(function(pid){
+    var p=getP(t,pid);
+    return p&&!p.disqualified;
+  }).sort(function(a,b){return tbTotal(round,b)-tbTotal(round,a);});
+}
+function computeElimAdvance(t,round){
+  var K=CONFIG.ELIM_ADVANCE_PER_TABLE;
+  var per=round.tables.map(function(tb){
+    return tb.players.slice().filter(function(pid){var p=getP(t,pid);return p&&!p.disqualified;})
+      .sort(function(a,b){return tbTotal(round,b)-tbTotal(round,a);});
+  });
+  var result=[];
+  var thirdPool=[];
+  var loose=[];
+  per.forEach(function(s,ti){
+    var adv=s.slice(0,K);
+    adv.forEach(function(pid){
+      var p=getP(t,pid);
+      if(p&&p.withdrawn)result.push(null);
+      else result.push(pid);
+    });
+    var bestActive=null;
+    s.slice(K).forEach(function(pid){
+      var p=getP(t,pid);
+      if(!p.withdrawn&&!p.disqualified){
+        if(bestActive==null)bestActive={pid:pid,score:tbTotal(round,pid),ti:ti};
+        else if(tbTotal(round,pid)>bestActive.score)bestActive={pid:pid,score:tbTotal(round,pid),ti:ti};
+      }
+    });
+    if(bestActive)thirdPool.push(bestActive);
+    s.slice(K).forEach(function(pid){
+      var p=getP(t,pid);
+      if(!p.withdrawn&&!p.disqualified&&!(thirdPool.some(function(x){return x.pid===pid;})))loose.push({pid:pid,score:tbTotal(round,pid)});
+    });
+  });
+  thirdPool.sort(function(a,b){return b.score-a.score;});
+  loose.sort(function(a,b){return b.score-a.score;});
+  var used={};
+  result.forEach(function(pid,i){
+    if(pid!==null){used[pid]=true;return;}
+    var sub=null;
+    for(var j=0;j<thirdPool.length;j++){if(!used[thirdPool[j].pid]){sub=thirdPool[j];break;}}
+    if(!sub){for(j=0;j<loose.length;j++){if(!used[loose[j].pid]){sub=loose[j];break;}}}
+    if(sub){used[sub.pid]=true;result[i]=sub.pid;}
+    else result[i]=null;
+  });
+  return result.filter(function(x){return x!==null;});
+}
+function confirmElimRound(roundNo){
+  var t=curT();if(!t)return;
+  var elim=t.elimination;
+  if(!elim)return;
+  var r=elim.rounds.find(function(x){return x.roundNo===roundNo;});
+  if(!r){uiAlert('找不到该轮次');return;}
+  if(r.confirmed){uiAlert('本轮已确认');return;}
+  computeElimRound(t,r);
+  r.advanced=computeElimAdvance(t,r);
+  r.confirmed=true;
+  if(r.roundNo>=3&&elim.finalRanking){elim.finalRanking=null;elim.manualFinal=null;}
+  saveData();render();
+}
+function reconfirmElimRound(roundNo){
+  var t=curT();if(!t)return;
+  var elim=t.elimination;
+  if(!elim)return;
+  var r=elim.rounds.find(function(x){return x.roundNo===roundNo;});
+  if(!r)return;
+  computeElimRound(t,r);
+  r.advanced=computeElimAdvance(t,r);
+  saveData();render();
+}
+function elimSeatedRound(t,pid){
+  if(!t||!t.elimination)return -1;
+  var deep=-1;
+  t.elimination.rounds.forEach(function(r,ri){
+    r.tables.forEach(function(tb){
+      if(tb.players.indexOf(pid)>=0)deep=ri;
+    });
+  });
+  return deep;
+}
+function elimPlayedRound(t,pid){
+  if(!t||!t.elimination)return -1;
+  var deep=-1;
+  t.elimination.rounds.forEach(function(r,ri){
+    r.tables.forEach(function(tb){
+      var d=tb.detail[pid];
+      if(d&&d.scores&&d.scores.some(function(s){return s!==0;}))deep=ri;
+    });
+  });
+  return deep;
+}
+function elimPlayedStable(t,pid){
+  var p=getP(t,pid);
+  if(p&&p.elimPlayed!=null)return p.elimPlayed;
+  return elimPlayedRound(t,pid);
+}
+function elimReachedRound(t,pid){
+  var p=getP(t,pid);
+  if(p&&p.elimReached!=null)return p.elimReached;
+  return -1;
+}
+function buildFinalRanking(){
+  var t=curT();if(!t)return;
+  var elim=t.elimination;
+  if(!elim||!elim.rounds.length){uiAlert('还没有淘汰赛轮次');return;}
+  elim.finalRanking=computeFinalRankingList(t);
+  saveData();render();
+  uiAlert('最终排名已生成（共 '+elim.finalRanking.length+' 人）。');
+}
+function computeFinalRankingList(t){
+  var elim=t.elimination;
+  var r1=elim.rounds[0],r2=elim.rounds[1],r3=elim.rounds[2];
+  var list=[],seen={};
+  function add(pid){
+    if(pid==null||seen[pid])return;
+    var p=getP(t,pid);
+    if(!p||p.disqualified)return;
+    seen[pid]=true;list.push(pid);
+  }
+  var eqr=effectiveQualRanking(t);
+  function eqrIdx(pid){return eqr.indexOf(pid);}
+  // 晋级赛积分：同淘汰赛积分档内按总分（elim相同→qual）排序用
+  var ptsMap=computePoints(t);
+  function qualOf(pid){
+    var p=getP(t,pid);
+    return ptsMap[p&&p.name]?ptsMap[p.name].qual:0;
+  }
+  // 每轮未晋级者按桌内位次分组：第3名（高分档）在前、第4名（低分档）在后
+  function roundNotAdvGrouped(r){
+    var advSet={};
+    r.advanced.forEach(function(pid){advSet[pid]=true;});
+    var third=[],fourth=[];
+    r.tables.forEach(function(tb,ti){
+      rawSorted(t,r,ti).forEach(function(pid,pos){
+        if(advSet[pid])return;
+        if(pos>=3)fourth.push(pid);else third.push(pid);
+      });
+    });
+    return {third:third,fourth:fourth};
+  }
+  // 该轮「晋级位」（本桌原始成绩前K）中、退赛且「打过」该轮者 —— 按本轮各桌第三名档。
+  // 不能用 r.advanced 判定：重新确认后 advanced 会被递补重写、退赛者被剔除导致漏判。
+  function advancedWd(r,minPlayed){
+    var out=[],seen2={};
+    r.tables.forEach(function(tb,ti){
+      rawSorted(t,r,ti).slice(0,CONFIG.ELIM_ADVANCE_PER_TABLE).forEach(function(pid){
+        if(seen2[pid])return;
+        seen2[pid]=true;
+        var p=getP(t,pid);
+        if(p&&p.withdrawn&&elimPlayedStable(t,pid)>=minPlayed)out.push(pid);
+      });
+    });
+    out.sort(function(a,b){return tbTotal(r,b)-tbTotal(r,a);});
+    return out;
+  }
+  // 前16名候选：淘汰赛积分档位 tier（0=决赛 1=半决赛第3名/40 2=半决赛第4名/30
+  //                                3=16强第3名/20 4=16强第4名/10）
+  var cands=[];
+  function addCand(pid,tier){cands.push({pid:pid,tier:tier,qual:qualOf(pid)});}
+  // 决赛档 1-4：按原始成绩排（真正的决赛第一名，即使退赛成绩仍完整）；退赛者不沉底。
+  // 决赛档直接按决赛成绩加入，不参与 cands 的「同档按晋级赛积分」排序——冠军必须按决赛成绩判定
+  if(r3){rawSorted(t,r3,0).forEach(add);}
+  if(r2){
+    advancedWd(r2,1).forEach(function(pid){addCand(pid,1);});
+    var g2=roundNotAdvGrouped(r2);
+    g2.third.forEach(function(pid){addCand(pid,1);});
+    g2.fourth.forEach(function(pid){addCand(pid,2);});
+  }
+  if(r1){
+    advancedWd(r1,0).forEach(function(pid){addCand(pid,3);});
+    var g1=roundNotAdvGrouped(r1);
+    g1.third.forEach(function(pid){addCand(pid,3);});
+    g1.fourth.forEach(function(pid){addCand(pid,4);});
+  }
+  // 进淘汰赛选手优先：先按淘汰赛积分档位，同档按总分（晋级赛积分）降序
+  cands.sort(function(a,b){
+    if(a.tier!==b.tier)return a.tier-b.tier;
+    return b.qual-a.qual;
+  });
+  cands.forEach(function(c){add(c.pid);});
+  // 末尾 others（0分）：未打淘汰赛者按「总分」降序，同分按晋级赛名次；其余退赛者兜底（DQ 除外）
+  var rest=t.players.filter(function(p){return !seen[p.id]&&!p.disqualified;});
+  rest.sort(function(a,b){
+    var pa=ptsMap[a.name]||{elim:0,qual:0},pb=ptsMap[b.name]||{elim:0,qual:0};
+    var ta=pa.elim+pa.qual,tb=pb.elim+pb.qual;
+    if(ta!==tb)return tb-ta;
+    return eqrIdx(a.id)-eqrIdx(b.id);
+  });
+  rest.forEach(function(p){add(p.id);});
+  t.players.forEach(function(p){if(p.withdrawn&&!seen[p.id])add(p.id);});
+  return list;
+}
+function moveFinal(pid,dir){
+  var t=curT();if(!t)return;
+  var elim=t.elimination;
+  if(!elim||!elim.finalRanking)return;
+  var auto=autoFinalRanking(t);
+  var list=elim.manualFinal&&elim.manualFinal.length?elim.manualFinal.slice():auto.slice();
+  var i=list.indexOf(pid);
+  if(i<0)return;
+  var j=i+dir;
+  if(j<0||j>=list.length)return;
+  var tmp=list[i];list[i]=list[j];list[j]=tmp;
+  elim.manualFinal=list;
+  saveData();render();
+}
+function autoFinalRanking(t){
+  if(!t.elimination)return[];
+  return computeFinalRankingList(t);
+}
+function resetFinal(){
+  var t=curT();if(!t)return;
+  uiConfirm('重置为自动排名？（清除手动微调）',function(){
+    if(t.elimination)t.elimination.manualFinal=null;
+    saveData();render();
+  });
+}
+function rollbackFinal(){
+  var t=curT();if(!t)return;
+  uiConfirm('回退最终排名？（排名将被清除）',function(){
+    if(t.elimination){t.elimination.finalRanking=null;t.elimination.manualFinal=null;}
+    saveData();render();
+  });
+}
+function finishTournament(){
+  var t=curT();if(!t)return;
+  uiConfirm('完成赛事「'+t.name+'」？（成绩将回流积分榜，状态变为已完成）',function(){
+    t.status='done';
+    saveData();render();
+    uiAlert('赛事已完成，成绩已计入积分榜。');
+  });
+}
+
+/* ==== 模块8：结果与最终排名 ==== */
+function viewResult(t){
+  if(t.elimination&&t.elimination.finalRanking&&t.elimination.finalRanking.length){
+    return finalRankingHTML(t);
+  }
+  return '<div class="card"><div class="hint">还没有最终排名。请先到「淘汰赛」完成三轮并生成最终 1-16 名排名。</div>'+
+    '<div class="toolbar no-print"><button onclick="goStep(\'elimination\')">去淘汰赛</button></div></div>';
+}
+function rankLabelOf(i,medals){
+  // 名次区间显示（更醒目）：5-6=半决赛第3名 7-8=半决赛第4名 9-12=16强第3名 13-16=16强第4名
+  if(i<4)return medals[i];
+  if(i<6)return '5-6';
+  if(i<8)return '7-8';
+  if(i<12)return '9-12';
+  if(i<16)return '13-16';
+  return i+1;
+}
+function finalRankingHTML(t){
+  var elim=t.elimination;
+  var fr=elim.finalRanking;
+  var pts=computePoints(t);
+  var eqr=effectiveQualRanking(t);
+  var medals=['冠军','亚军','季军','殿军'];
+    var h='<div class="toolbar no-print">';
+  h+='<button class="gray" onclick="resetFinal()">↻ 重置为自动排名</button>';
+  h+='<button class="gray" onclick="rollbackFinal()">↩ 回退最终排名</button>';
+  if(t.status!=='done')h+='<button class="green" onclick="finishTournament()">✔ 完成赛事（成绩回流积分榜）</button>';
+  h+='<button class="gray" onclick="showExportModal(\'result\')">🖨 导出（排名+积分表）</button>';
+
+h+='<h3>最终排名（1-'+fr.length+'）</h3>';
+  h+='<div class="flex-table"><table>';
+  h+='<tr><th>名次</th><th>昵称</th><th>晋级赛排名</th><th>晋级赛积分</th><th>淘汰赛积分</th><th>总积分</th><th class="no-print">操作</th></tr>';
+  fr.forEach(function(pid,i){
+    var p=getP(t,pid);
+    var pt=pts[p.name]||{elim:0,qual:0,dq:false};
+    var qr=eqr.indexOf(pid)+1;
+    var rankLabel=rankLabelOf(i,medals);
+    var markWd=shouldMarkWd(t,p);
+    var cls=(i<16?'promote ':'')+(markWd?'wdrow':'');
+    h+='<tr class="'+cls+'"><td><b>'+rankLabel+'</b></td>';
+    h+='<td style="text-align:left">'+esc(p.name)+' '+finalTagsOf(t,p)+'</td>';
+    h+='<td>'+(qr||'—')+'</td>';
+    h+='<td>'+(pt.dq?'—':fmt(pt.qual))+'</td>';
+    h+='<td>'+(pt.dq?'—':fmt(pt.elim))+'</td>';
+    h+='<td><b>'+(pt.dq?'—':fmt(pt.elim+pt.qual))+'</b></td>';
+    h+='<td class="no-print"><button class="mini gray" onclick="moveFinal(\''+pid+'\',-1)">↑</button><button class="mini gray" onclick="moveFinal(\''+pid+'\',1)">↓</button></td></tr>';
+  });
+  h+='</table></div>';
+  return h;
+}
+function viewCurrent(){
+  var t=curT();
+  if(!t)return '<div class="card"><p class="muted">还没有选择赛事，请先到「赛事列表」进入或新建赛事。</p>'+
+    '<div class="toolbar no-print"><button class="green" onclick="navTo(\'tournaments\')">去赛事列表</button></div></div>';
+  var steps=[['pool','① 选手池'],['qualifier','② 晋级赛'],['elimination','③ 淘汰赛'],['result','④ 结果']];
+  var h='<div class="card"><h2>'+esc(t.name)+' <span class="tag '+(t.status==='done'?'done':'ongoing')+'">'+(t.status==='done'?'已完成':'进行中')+'</span></h2>';
+  h+='<div class="stepbar no-print">';
+  steps.forEach(function(s){
+    h+='<button class="st'+(APP.step===s[0]?' active':'')+'" onclick="goStep(\''+s[0]+'\')">'+s[1]+'</button>';
+  });
+  h+='</div></div>';
+  if(APP.step==='pool')h+=viewPool(t);
+  else if(APP.step==='qualifier')h+=viewQualifier(t);
+  else if(APP.step==='elimination')h+=viewElimination(t);
+  else h+=viewResult(t);
+  return h;
+}
+/* ==== 模块9：积分与积分榜 ==== */
+function elimPointsTable(){
+  // 名次区间档位（与 rankLabelOf 区间显示对应）：
+  // 1-4 决赛 100/80/65/50；5-6 半决赛第3名 40/40；7-8 半决赛第4名 30/30；
+  // 9-12 16强第3名 20×4；13-16 16强第4名 10×4
+  return [CONFIG.P_CHAMPION,CONFIG.P_RUNNER_UP,CONFIG.P_THIRD,CONFIG.P_FOURTH,
+    CONFIG.P_SEMI_3RD,CONFIG.P_SEMI_3RD,CONFIG.P_SEMI_4TH,CONFIG.P_SEMI_4TH,
+    CONFIG.P_R16_3RD,CONFIG.P_R16_3RD,CONFIG.P_R16_3RD,CONFIG.P_R16_3RD,
+    CONFIG.P_R16_4TH,CONFIG.P_R16_4TH,CONFIG.P_R16_4TH,CONFIG.P_R16_4TH];
+}
+function qualLinearPoints(rank,N){
+  if(rank===1)return CONFIG.P_QUAL_MAX;
+  var v=CONFIG.P_QUAL_MAX-Math.floor(CONFIG.P_QUAL_SLOPE*(rank-1)/(N-1));
+  if(v>49)v=49;
+  if(v<CONFIG.P_QUAL_MIN)v=CONFIG.P_QUAL_MIN;
+  return v;
+}
+function computePoints(t){
+  var out={};
+  var fr=t.elimination&&t.elimination.finalRanking?t.elimination.finalRanking:[];
+  var idxMap={};
+  fr.forEach(function(pid,i){idxMap[pid]=i;});
+  var eqr=effectiveQualRanking(t);
+  // 晋级淘汰赛判定：前16名活跃者 + 冻结晋级集合（并集，红线）
+  var reached=new Set();
+  var actC=0;
+  for(var i=0;i<eqr.length&&actC<CONFIG.PROMOTE_TO_ELIM;i++){
+    var pp=getP(t,eqr[i]);
+    if(pp&&!pp.withdrawn&&!pp.disqualified){reached.add(eqr[i]);actC++;}
+  }
+  var q=t.qualifier;
+  (q.qualified||q.promoted||[]).forEach(function(pid){reached.add(pid);});
+  // 晋级赛积分名次集（文档 §6.10 勿改）：
+  // rankedSet = eqr 中「活跃」或「晋级淘汰赛但退赛」者（按 eqr 名次顺序）；
+  // 线性积分按 rankedSet 内名次：第1名精确50、末名精确10，N=rankedSet 人数（不含DQ/未达线退赛者）
+  var rankedSet=eqr.filter(function(pid){
+    var p=getP(t,pid);
+    if(!p||p.disqualified)return false;
+    if(p.withdrawn)return reached.has(pid);
+    return true;
+  });
+  var N2=rankedSet.length;
+  t.players.forEach(function(p){
+    var name=p.name;
+    if(p.disqualified){out[name]={elim:0,qual:0,dq:true};return;}
+    var elim=0;
+    var i=idxMap[p.id];
+    if(i!=null&&i<16){
+      elim=elimPointsTable()[i]||0;
+      if(p.withdrawn){
+        var seated=elimSeatedRound(t,p.id),played=elimPlayedStable(t,p.id);
+        if(!(seated>=0||played>=0))elim=0;
+      }
+    }
+    var qual=10;
+    var k=rankedSet.indexOf(p.id);
+    if(k>=0){
+      if(N2===1)qual=50;
+      else qual=qualLinearPoints(k+1,N2);
+    }else if(p.withdrawn){
+      qual=10;   // 仅晋级赛退赛（未达线）→ 固定10
+    }else{
+      qual=10;   // 兜底
+    }
+    out[name]={elim:elim,qual:qual,dq:false};
+  });
+  return out;
+}
+function completedTournaments(){
+  return DATA.tournaments.filter(function(t){
+    return t.status==='done'&&t.elimination&&t.elimination.finalRanking&&t.elimination.finalRanking.length;
+  }).sort(function(a,b){return b.createdAt-a.createdAt;});
+}
+function computeLeaderboard(){
+  var done=completedTournaments().slice(0,CONFIG.ROLLING_SEASONS);
+  var rows={};
+  done.forEach(function(t){
+    var pts=computePoints(t);
+    for(var name in pts){
+      var pt=pts[name];
+      if(pt.dq)continue;
+      var row=rows[name];
+      if(!row){row={name:name,total:0,seasons:[],top:0,lastElim:false};rows[name]=row;}
+      var over=t.pointOverrides[name];
+      if(over!=null){
+        row.seasons.push({tid:t.id,points:over,source:'总积分',override:true});
+        row.total+=over;
+      }else{
+        row.seasons.push({tid:t.id,points:pt.elim,source:'淘汰赛',override:false});
+        row.seasons.push({tid:t.id,points:pt.qual,source:'晋级赛',override:false});
+        row.total+=pt.elim+pt.qual;
+      }
+    }
+  });
+  var list=Object.keys(rows).map(function(k){return rows[k];});
+  var last=done[0];
+  if(last){
+    var fr=last.elimination.finalRanking;
+    var names={};
+    fr.slice(0,16).forEach(function(pid){
+      var p=getP(last,pid);
+      if(p)names[p.name]=true;
+    });
+    list.forEach(function(r){if(names[r.name])r.lastElim=true;});
+    list.forEach(function(r){
+      var lastSeasons=r.seasons.filter(function(s){return s.tid===last.id;});
+      r.top=lastSeasons.reduce(function(a,s){return a+s.points;},0);
+    });
+  }
+  list.sort(function(a,b){return b.total-a.total;});
+  return list;
+}
+function inviteList(){
+  var board=computeLeaderboard();
+  var invited=[],seen={};
+  board.slice(0,CONFIG.INVITE_TOP_N).forEach(function(r){
+    if(seen[r.name])return;
+    seen[r.name]=true;
+    invited.push({name:r.name,total:r.total,top:r.top,lastElim:r.lastElim});
+  });
+  board.forEach(function(r){
+    if(r.lastElim&&!seen[r.name]){
+      seen[r.name]=true;
+      invited.push({name:r.name,total:r.total,top:r.top,lastElim:r.lastElim});
+    }
+  });
+  return invited;
+}
+function viewScoreboard(){
+  var board=computeLeaderboard();
+  BOARD_NAMES=board.map(function(r){return r.name;});
+  var h='<div class="card"><h2>积分榜 <span class="tag invite">滚动最近 '+CONFIG.ROLLING_SEASONS+' 届</span></h2>';
+  h+='<div class="muted">直邀 = 积分榜前 '+CONFIG.INVITE_TOP_N+' 名 + 上届 16 强。</div>';
+  h+='<div class="toolbar no-print">';
+  h+='<button class="gray" onclick="exportInvites()">⬇ 导出直邀名单</button>';
+  h+='<button class="gray" onclick="showExportModal(\'board\')">🖨 导出积分表</button>';
+  h+='<button class="gray" onclick="restoreAuto()">↻ 恢复自动计算</button>';
+  h+='<span style="flex:1"></span>';
+  h+='<button class="'+(APP.ppBoard?'green':'')+'" onclick="togglePreview(\'ppBoard\')">'+(APP.ppBoard?'✕ 退出预览':'👁 选手预览')+'</button>';
+  h+='</div>';
+  if(!board.length){h+='<p class="muted">还没有已完成的赛事，积分榜为空。完成赛事后成绩将自动回流。</p></div>';return h;}
+  if(APP.ppBoard){
+    h+=boardTableHTML(board);
+    h+=inviteTableHTML(board);
+    h+='</div>';
+    return h;
+  }
+  h+=boardTableHTML(board);
+  h+='</div>';
+  return h;
+}
+function boardTableHTML(board){
+  var h='<div class="flex-table"><table>';
+  h+='<tr><th>排名</th><th>选手</th><th>近'+CONFIG.ROLLING_SEASONS+'届累计</th><th class="no-print">明细</th></tr>';
+  board.forEach(function(r,i){
+    var tagStr='';
+    if(i<CONFIG.INVITE_TOP_N)tagStr+='<span class="tag invite">⭐积分前'+CONFIG.INVITE_TOP_N+'（直邀）</span>';
+    if(r.lastElim)tagStr+='<span class="tag champ">🏆上届16强</span>';
+    var expanded=APP.expandedPlayer===r.name;
+    h+='<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.name)+' '+tagStr+'</td><td><b>'+fmt(r.total)+'</b></td>';
+    h+='<td class="no-print"><button class="mini gray" onclick="toggleExpand('+i+')">'+(expanded?'收起':'展开')+'</button></td></tr>';
+    if(expanded){
+      h+='<tr><td colspan="4" style="text-align:left"><div class="flex-table"><table class="sub-tbl">';
+      h+='<tr><th>届次</th><th>积分</th><th>来源</th><th class="no-print">操作</th></tr>';
+      if(r.seasons&&r.seasons.length){
+        r.seasons.forEach(function(s){
+          var t=getT(s.tid);
+          h+='<tr><td>'+(t?esc(t.name):'（已删除）')+'</td>';
+          h+='<td><input class="mini" type="number" step="any" value="'+fmt(s.points)+'" onchange="editPoints(\''+s.tid+'\',\''+esc(r.name)+'\',this.value)"></td>';
+          h+='<td>'+s.source+'</td>';
+          h+='<td><button class="mini red" onclick="delSeason(\''+s.tid+'\',\''+esc(r.name)+'\')">删除</button></td></tr>';
+        });
+      }else{
+        h+='<tr><td colspan="4" class="muted">暂无届次记录</td></tr>';
+      }
+      h+='</table></div>';
+      h+='<div class="toolbar"><button class="mini gray" onclick="addSeason(\''+esc(r.name)+'\')">+ 为该选手添加届次记录</button></div>';
+      h+='</td></tr>';
+    }
+  });
+  h+='</table></div>';
+  return h;
+}
+function inviteTableHTML(board){
+  var inv=inviteList();
+  var h='<h3>直邀名单（'+(inv.length)+' 人）</h3>';
+  h+='<div class="flex-table"><table><tr><th>#</th><th>选手</th><th>近'+CONFIG.ROLLING_SEASONS+'届累计</th><th>资格</th></tr>';
+  inv.forEach(function(x,i){
+    var qual=x.lastElim?'<span class="tag champ">🏆上届16强</span>':'<span class="tag invite">⭐积分前'+CONFIG.INVITE_TOP_N+'（直邀）</span>';
+    h+='<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(x.name)+'</td><td>'+fmt(x.total)+'</td><td>'+qual+'</td></tr>';
+  });
+  h+='</table></div>';
+  return h;
+}
+function toggleExpand(i){
+  var name=BOARD_NAMES[i];
+  APP.expandedPlayer=APP.expandedPlayer===name?null:name;
+  render();
+}
+function editPoints(tid,name,val){
+  var t=getT(tid);if(!t)return;
+  t.pointOverrides[name]=num(val);
+  saveData();render();
+}
+function delSeason(tid,name){
+  var t=getT(tid);if(!t)return;
+  uiConfirm('删除「'+name+'」在该届的积分记录？（删除后恢复自动计算）',function(){
+    delete t.pointOverrides[name];
+    saveData();render();
+  });
+}
+function addSeason(name){
+  uiPrompt('为「'+name+'」添加届次记录（输入总积分，将作为手动总积分覆盖）','',function(val){
+    val=num(val);
+    var t=completedTournaments()[0];
+    if(t){t.pointOverrides[name]=val;saveData();render();}
+    else uiAlert('还没有已完成的赛事，无法添加届次记录。');
+  });
+}
+function restoreAuto(){
+  var t=curT();
+  uiConfirm('恢复所有选手的自动积分计算？（清除全部手动覆盖）',function(){
+    if(t)t.pointOverrides={};
+    else DATA.tournaments.forEach(function(x){x.pointOverrides={};});
+    saveData();render();
+  });
+}
+
+/* ==== 模块10：导出 / 打印系统 ==== */
+function exportPDF(scope){
+  var s=typeof scope==='string'?{mode:scope}:scope||{};
+  var t=curT();
+  var pa=document.getElementById('printArea');
+  var html='';
+  try{
+    if(s.mode==='qual'&&t)html=buildQualifierHTML(t,s);
+    else if(s.mode==='elim'&&t)html=buildEliminationHTML(t,s);
+    else if(s.mode==='result'&&t)html=buildEliminationHTML(t,{round:null,rankOnly:false,resultOnly:true,sheet:undefined});
+    else if(s.mode==='board')html=buildScoreboardHTML();
+    else html='<h1>暂无导出内容</h1>';
+  }catch(e){html='<h1>导出失败</h1><p>'+esc(e&&e.message?e.message:e)+'</p>';}
+  pa.innerHTML=html;
+  _printSavedTitle=document.title;
+  var dn=(t&&t.name?t.name:'好奇杯')+'·'+({qual:'晋级赛',elim:'淘汰赛',result:'最终排名',board:'积分榜'}[s.mode]||'导出');
+  document.title=dn; // 打印页眉显示文档名，不再出现系统名/文件名
+  openPrintPreview();
+}
+/* ==== 模块13：离线 PDF 导出（不经过打印机）====
+   把导出的 HTML 解析成「标题 + 表格」区块，画到 canvas，再以 JPEG 嵌入手写 PDF 结构。
+   全程零依赖，不调用 window.print()，因此不受内嵌浏览器/预览框的限制。
+   行样式（晋级绿底 / 退赛删除线 / 取消资格 / 待定）与打印版保持一致。 */
+var PDF_W=1654,PDF_H=2339,PDF_MARGIN=74;     // A4 @200dpi，够清晰
+var PDF_PT_W=595.28,PDF_PT_H=841.89;
+
+function pdfChoose(mode,opts){
+  var t=curT();
+  if(!t){uiAlert('请先选择赛事');return;}
+  var scope={};for(var k in opts)scope[k]=opts[k];
+  scope.mode=mode;
+  var html='';
+  try{
+    if(mode==='qual')html=buildQualifierHTML(t,scope);
+    else if(mode==='elim')html=buildEliminationHTML(t,scope);
+    else if(mode==='board')html=buildScoreboardHTML();
+    else html='';
+  }catch(e){uiAlert('导出内容生成失败：'+(e&&e.message?e.message:e));return;}
+  if(!html){uiAlert('暂无可导出的内容');return;}
+  try{
+    var canvases=pdfRender(html);
+    if(!canvases.length){uiAlert('导出的内容为空');return;}
+    var bytes=pdfBuild(canvases);
+    var dn=(t.name||'好奇杯')+'·'+({qual:'晋级赛',elim:'淘汰赛',board:'积分榜'}[mode]||'导出')+'.pdf';
+    downloadText(dn,bytes,'application/pdf');
+    uiAlert('PDF 已生成并开始下载：'+canvases.length+' 页。\\n没看到下载就检查浏览器的下载栏（Ctrl+J）。');
+  }catch(e){uiAlert('PDF 生成失败：'+(e&&e.message?e.message:e));}
+}
+
+/* 把导出 HTML 解析成区块：{t:'h1'|'h2'|'h3'|'meta'|'table', text, headers, rows} */
+function pdfBlocks(html){
+  var box=document.createElement('div');
+  box.innerHTML=html;
+  var out=[];
+  [].forEach.call(box.children,function(el){
+    var tag=el.tagName.toLowerCase();
+    if(tag==='h1'||tag==='h2'||tag==='h3'){
+      var tx=(el.textContent||'').trim();
+      var prev=out[out.length-1];
+      if(prev&&prev.t!=='table'&&prev.text===tx)return;   // 去掉紧挨着的重复标题
+      out.push({t:tag,text:tx});
+    }else if(tag==='p'){
+      out.push({t:'meta',text:(el.textContent||'').trim()});
+    }else{
+      var tb=el.querySelector?el.querySelector('table'):null;
+      if(!tb)return;
+      var trs=[].slice.call(tb.querySelectorAll('tr'));
+      if(!trs.length)return;
+      var heads=[],rows=[];
+      trs.forEach(function(tr){
+        var cells=[].slice.call(tr.children).map(function(td){return (td.textContent||'').trim();});
+        var isHead=(tr.parentNode&&tr.parentNode.tagName==='THEAD')||
+          [].every.call(tr.children,function(c){return c.tagName==='TH';});
+        if(isHead){if(!heads.length)heads=cells;}
+        else rows.push({cells:cells,cls:String(tr.className||'')});
+      });
+      if(heads.length||rows.length)out.push({t:'table',headers:heads,rows:rows});
+    }
+  });
+  return out;
+}
+
+function pdfFont(px,bold){
+  return (bold?'bold ':'')+px+'px "Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif';
+}
+function pdfEllipsis(ctx,text,max){
+  text=String(text==null?'':text);
+  if(ctx.measureText(text).width<=max)return text;
+  while(text.length>1&&ctx.measureText(text+'…').width>max)text=text.slice(0,-1);
+  return text+'…';
+}
+
+function pdfRender(html){
+  var blocks=pdfBlocks(html);
+  var cv=null,ctx=null,pages=[],y=0;
+
+  function startPage(){
+    cv=document.createElement('canvas');cv.width=PDF_W;cv.height=PDF_H;
+    ctx=cv.getContext('2d');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,PDF_W,PDF_H);
+    ctx.textBaseline='middle';
+    y=PDF_MARGIN;
+  }
+  // 必须先把当前页画完再入队，否则内容会画在没入队的画布上（导出空白页）
+  function newPage(){pages.push(cv);startPage();}
+  startPage();
+  var availW=PDF_W-PDF_MARGIN*2;
+
+  function need(h){
+    if(y+h>PDF_H-PDF_MARGIN){newPage();return true;}
+    return false;
+  }
+  function line(x1,y1,x2,y2,color,w){
+    ctx.strokeStyle=color;ctx.lineWidth=w||1;
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  }
+
+  blocks.forEach(function(b){
+    if(b.t==='h1'){
+      need(60);
+      ctx.font=pdfFont(38,true);ctx.fillStyle='#10333f';ctx.textAlign='left';
+      ctx.fillText(pdfEllipsis(ctx,b.text,availW),PDF_MARGIN,y+28);
+      y+=56;line(PDF_MARGIN,y,PDF_W-PDF_MARGIN,y,'#e8a33d',3);y+=16;
+    }else if(b.t==='h2'||b.t==='h3'){
+      var big=b.t==='h2';
+      need(big?52:44);
+      ctx.font=pdfFont(big?28:24,true);ctx.fillStyle='#10333f';ctx.textAlign='left';
+      ctx.fillText(pdfEllipsis(ctx,b.text,availW),PDF_MARGIN,y+22);
+      y+=big?48:40;
+    }else if(b.t==='meta'){
+      need(30);
+      ctx.font=pdfFont(18,false);ctx.fillStyle='#6b7280';ctx.textAlign='left';
+      ctx.fillText(pdfEllipsis(ctx,b.text,availW),PDF_MARGIN,y+13);
+      y+=28;
+    }else if(b.t==='table'){
+      pdfDrawTable(function(){return ctx;},b,{
+        availW:availW,x:PDF_MARGIN,
+        getY:function(){return y;},
+        setY:function(v){y=v;},
+        need:need,line:line
+      });
+      y+=20;
+    }
+  });
+  if(cv&&(y>PDF_MARGIN||!pages.length))pages.push(cv);   // 收尾：最后一页有内容才收
+  return pages;
+}
+
+function pdfDrawTable(getCtx,b,env){
+  // 换页后 ctx 会指向新画布，必须每次重新取，否则会画回上一页并覆盖内容
+  var ctx=getCtx();
+  var headers=b.headers.length?b.headers:b.rows[0].cells;
+  var body=b.headers.length?b.rows:b.rows.slice(1);
+  var n=headers.length;
+  if(!n)return;
+  var PAD=12,FS=19,ROW=42,HEAD=48;
+
+  ctx.font=pdfFont(FS,false);
+  var natural=headers.map(function(h,i){
+    var w=ctx.measureText(h).width+PAD*2+4;
+    body.forEach(function(r){
+      var v=r.cells[i];if(v==null)return;
+      w=Math.max(w,ctx.measureText(String(v)).width+PAD*2+4);
+    });
+    return Math.ceil(w);
+  });
+  var total=natural.reduce(function(a,c){return a+c;},0);
+  var widths;
+  if(total<=env.availW){
+    widths=natural.slice();
+  }else{
+    var k=env.availW/total;
+    widths=natural.map(function(w,i){return Math.max(i===0?46:62,Math.floor(w*k));});
+    var t2=widths.reduce(function(a,c){return a+c;},0);
+    if(t2>env.availW){
+      var k2=env.availW/t2;
+      widths=widths.map(function(w){return Math.max(40,Math.floor(w*k2));});
+    }
+  }
+  var tw=widths.reduce(function(a,c){return a+c;},0);
+  var x0=env.x+Math.max(0,Math.floor((env.availW-tw)/2));
+
+  function head(){
+    var ctx=getCtx();
+    var y=env.getY();
+    ctx.fillStyle='#1b3b47';ctx.fillRect(x0,y,tw,HEAD);
+    ctx.font=pdfFont(FS,true);ctx.fillStyle='#ffffff';ctx.textAlign='left';
+    var x=x0;
+    for(var i=0;i<n;i++){
+      ctx.fillText(pdfEllipsis(ctx,headers[i],widths[i]-PAD*2),x+PAD,y+HEAD/2);
+      x+=widths[i];
+    }
+    env.setY(y+HEAD);
+  }
+  env.need(HEAD+ROW);
+  head();
+
+  body.forEach(function(r,ri){
+    if(env.need(ROW))head();
+    var ctx=getCtx();
+    var y=env.getY(),cls=r.cls||'';
+    var bg=(ri%2===0)?'#ffffff':'#fffdf7';
+    var fg='#2b3741',strike=false;
+    if(cls.indexOf('promote')>=0)bg='#dcfce7';                       // 晋级
+    if(cls.indexOf('wdrow')>=0)bg='#fdf1df';                          // 晋级后退赛
+    if(cls.indexOf('withdrawn')>=0){bg='#fee2e2';fg='#b91c1c';strike=true;}
+    if(cls.indexOf('disqualified')>=0){bg='#fdeece';fg='#9a6a12';strike=true;}
+    ctx.fillStyle=bg;ctx.fillRect(x0,y,tw,ROW);
+    ctx.strokeStyle='#f0e9da';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x0,y+ROW);ctx.lineTo(x0+tw,y+ROW);ctx.stroke();
+    ctx.font=pdfFont(FS,false);ctx.fillStyle=fg;ctx.textAlign='left';
+    var x=x0;
+    for(var i=0;i<n;i++){
+      var txt=pdfEllipsis(ctx,r.cells[i],widths[i]-PAD*2);
+      ctx.fillText(txt,x+PAD,y+ROW/2);
+      if(strike){
+        var w=ctx.measureText(txt).width;
+        ctx.strokeStyle=fg;ctx.lineWidth=1.4;
+        ctx.beginPath();ctx.moveTo(x+PAD,y+ROW/2);ctx.lineTo(x+PAD+w,y+ROW/2);ctx.stroke();
+      }
+      x+=widths[i];
+    }
+    env.setY(y+ROW);
+  });
+  getCtx().strokeStyle='#d9cfb8';
+}
+
+/* ---- 手写 PDF：每页一张 JPEG 图 ---- */
+function pdfStr(s){var o=new Uint8Array(s.length);for(var i=0;i<s.length;i++)o[i]=s.charCodeAt(i)&0xff;return o;}
+function pdfJpegOf(canvas){
+  var url=canvas.toDataURL('image/jpeg',0.95);
+  var b64=url.slice(url.indexOf(',')+1);
+  var bin=atob(b64),n=bin.length,out=new Uint8Array(n);
+  for(var i=0;i<n;i++)out[i]=bin.charCodeAt(i);
+  return out;
+}
+function pdfBuild(canvases,ptW,ptH){
+  ptW=ptW||PDF_PT_W;ptH=ptH||PDF_PT_H;
+  var pages=canvases.map(function(c){return {jpeg:pdfJpegOf(c),iw:c.width,ih:c.height};});
+  var chunks=[],offsets=[],len=0;
+  function push(u8){chunks.push(u8);len+=u8.length;}
+  push(pdfStr('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'));
+  var n=pages.length,next=3,pageIds=[],contentIds=[],imageIds=[];
+  for(var i=0;i<n;i++){pageIds.push(next++);contentIds.push(next++);imageIds.push(next++);}
+  offsets[1]=len;push(pdfStr('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n'));
+  offsets[2]=len;push(pdfStr('2 0 obj\n<</Type/Pages/Count '+n+'/Kids['+pageIds.map(function(x){return x+' 0 R';}).join(' ')+']>>\nendobj\n'));
+  for(var i=0;i<n;i++){
+    var pg=pages[i];
+    offsets[pageIds[i]]=len;
+    push(pdfStr(pageIds[i]+' 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+ptW+' '+ptH+
+      ']/Resources<</XObject<</Im0 '+imageIds[i]+' 0 R>>>>/Contents '+contentIds[i]+' 0 R>>\nendobj\n'));
+    var cs='q '+ptW+' 0 0 '+ptH+' 0 0 cm /Im0 Do Q\n';
+    offsets[contentIds[i]]=len;
+    push(pdfStr(contentIds[i]+' 0 obj\n<</Length '+cs.length+'>>\nstream\n'+cs+'endstream\nendobj\n'));
+    offsets[imageIds[i]]=len;
+    push(pdfStr(imageIds[i]+' 0 obj\n<</Type/XObject/Subtype/Image/Width '+pg.iw+'/Height '+pg.ih+
+      '/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+pg.jpeg.length+'>>\nstream\n'));
+    push(pg.jpeg);
+    push(pdfStr('\nendstream\nendobj\n'));
+  }
+  var total=next,xref=len;
+  var x='xref\n0 '+total+'\n0000000000 65535 f \n';
+  for(var i=1;i<total;i++)x+=('0000000000'+offsets[i]).slice(-10)+' 00000 n \n';
+  push(pdfStr(x));
+  push(pdfStr('trailer\n<</Size '+total+'/Root 1 0 R>>\nstartxref\n'+xref+'\n%%EOF\n'));
+  var out=new Uint8Array(len),o=0;
+  chunks.forEach(function(c){out.set(c,o);o+=c.length;});
+  return out;
+}
+
+/* 另存为独立 HTML：双击用浏览器打开后可 Ctrl+P 得到真正的文字版 PDF */
+function pdfSaveHtml(mode,opts){
+  var t=curT();
+  if(!t){uiAlert('请先选择赛事');return;}
+  var scope={};for(var k in opts)scope[k]=opts[k];
+  scope.mode=mode;
+  var html='',title=(t.name||'好奇杯')+'·'+({qual:'晋级赛',elim:'淘汰赛',board:'积分榜'}[mode]||'导出');
+  try{
+    if(mode==='qual')html=buildQualifierHTML(t,scope);
+    else if(mode==='elim')html=buildEliminationHTML(t,scope);
+    else html=buildScoreboardHTML();
+  }catch(e){uiAlert('生成失败：'+(e&&e.message?e.message:e));return;}
+  var css='body{margin:0;padding:18px 22px;background:#fff;font:14px/1.5 "Microsoft YaHei",system-ui,sans-serif;color:#2b3741}'+
+    'h1{font-size:22px;margin:6px 0 4px;color:#10333f;border-bottom:2px solid #e8a33d;padding-bottom:6px}'+
+    'h2{font-size:17px;margin:16px 0 6px;color:#10333f;border-left:4px solid #e8a33d;padding-left:8px}'+
+    'h3{font-size:15px;margin:14px 0 4px;color:#2a4650}'+
+    '.muted{color:#6b7280;font-size:12px}'+
+    'table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}'+
+    'th{background:#1b3b47;color:#eaf3f4;padding:6px 7px;font-weight:600;white-space:nowrap;text-align:center}'+
+    'td{padding:5px 7px;border-bottom:1px solid #f0e9da;border-right:1px solid #f5efe1;text-align:center}'+
+    'tbody tr:nth-child(even){background:#fffdf7}'+
+    'tr.promote td{background:#dcfce7}tr.wdrow td{background:#fdf1df}'+
+    'tr.withdrawn td{background:#fee2e2;color:#b91c1c}tr.disqualified td{background:#fdeece;text-decoration:line-through}'+
+    '.match-sheet{table-layout:fixed}'+
+    '@page{size:A4 portrait;margin:10mm}'+
+    '@media print{h2.page-break{page-break-before:always}}';
+  var outdoc='<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>'+title+'</title><style>'+css+'</style></head>'+
+    '<body>'+html+'</body></html>';
+  downloadText(title+'.html',outdoc,'text/html;charset=utf-8');
+  uiAlert('已另存为独立 HTML 文件。\\n\\n双击它 → 在浏览器里按 Ctrl+P → 目标选「另存为 PDF」，\\n得到的就是真正的文字版 PDF（可选中、可搜索、清晰不失真）。');
+}
+
+/* ==== 模块14：淘汰赛对阵图导出 ====
+   每个对阵只画「昵称 + 总分」；晋级行标绿，决赛桌冠亚季军分别标金/银/棕。 */
+var BR_GREEN='#166534',BR_GREEN_BG='#dcfce7';
+var BR_MEDAL=[{t:'#8a6412',bg:'#f7e3a1'},{t:'#5b646c',bg:'#e6eaee'},{t:'#7a4520',bg:'#eccdb4'}];
+
+var BR_COLS=[4,2,1];      // 16强 4 桌 / 半决赛 2 桌 / 决赛 1 桌
+var BR_SLOT=4;            // 每个方框固定 4 个位置，方框高度整齐
+
+/* 某一桌「当前」的晋级者（按现有成绩实时算，不需要轮次已确认） */
+function brLiveAdv(t,r,ti){
+  var p=getP(t,''),out=[];
+  try{
+    var sorted=rawSorted(t,r,ti)||[];
+    sorted.forEach(function(pid){
+      if(out.length>=CONFIG.ELIM_ADVANCE_PER_TABLE)return;
+      var pp=getP(t,pid);
+      if(pp&&!pp.withdrawn&&!pp.disqualified)out.push(pid);
+    });
+  }catch(e){}
+  return out;
+}
+function brRoundAdv(t,r,ci,last){
+  var lists=[];
+  r.tables.forEach(function(tb,ti){
+    var list;
+    if(!last&&!r.confirmed)list=brLiveAdv(t,r,ti);
+    else{
+      // r.advanced 是整轮的扁平名单，这里必须按桌过滤出自己的晋级者
+      var set={};(r.advanced||[]).forEach(function(x){set[x]=true;});
+      list=tb.players.filter(function(pid){var p=getP(t,pid);return set[pid]&&p&&!p.withdrawn&&!p.disqualified;})
+        .sort(function(x,y){return tbTotal(r,y)-tbTotal(r,x);});
+    }
+    lists.push(list);
+  });
+  return lists;
+}
+function brPad(players){        // 补齐到 4 个位置（空格子无文字）
+  var out=players.slice(0,BR_SLOT);
+  while(out.length<BR_SLOT)out.push(null);
+  return out;
+}
+
+function bracketModel(t){
+  var elim=t.elimination,rounds=(elim&&elim.rounds)||[];
+  var cols=[];
+  for(var ci=0;ci<BR_COLS.length;ci++){
+    var r=rounds[ci],boxes=[],advLists=null,last=(ci===BR_COLS.length-1);
+    if(r){
+      advLists=brRoundAdv(t,r,ci,last);
+      r.tables.forEach(function(tb,ti){
+        var set={};
+        (advLists[ti]||[]).forEach(function(x){set[x]=true;});
+        var ps=tb.players.map(function(pid){
+          var p=getP(t,pid);
+          return {name:p?p.name:'（已删除）',total:tbTotal(r,pid),adv:!!set[pid]};
+        }).sort(function(a,b){return b.total-a.total;});
+        if(last&&r.confirmed)ps.slice(0,3).forEach(function(x,k){x.medal=k;});
+        boxes.push({players:brPad(ps),proj:false});
+      });
+    }else{
+      // 本轮还没分桌：只放出空方框，不预填任何人（晋级选手确认后才落位）
+      for(var b=0;b<BR_COLS[ci];b++)boxes.push({players:brPad([]),proj:true});
+    }
+    cols.push({title:roundTitle(ci+1),boxes:boxes,exists:!!r,done:!!(r&&r.confirmed)});
+  }
+  return cols;
+}
+
+function buildBracketHTML(t){
+  var m=bracketModel(t);
+  if(!m)return '<h1>暂无淘汰赛数据</h1>';
+  var h='<h1>'+esc(t.name)+' · 淘汰赛对阵图</h1>';
+  h+='<div style="display:flex;gap:26px;align-items:center;justify-content:center;margin-top:18px">';
+  m.forEach(function(col){
+    h+='<div style="flex:1;min-width:0"><div style="text-align:center;font-size:13px;font-weight:700;color:#10333f;margin-bottom:8px">'+esc(col.title)+'</div>';
+    col.boxes.forEach(function(box){
+      h+='<div style="border:1.5px solid #cdbd99;border-radius:10px;overflow:hidden;margin:0 0 18px">';
+      box.players.forEach(function(p){
+        if(!p){h+='<div style="padding:6px 10px;border-bottom:1px solid #efe4c8;font-size:13px">&nbsp;</div>';return;}
+        var bg='#fff',fg='#2b3741',fw='400';
+        if(p.medal!=null){bg=BR_MEDAL[p.medal].bg;fg=BR_MEDAL[p.medal].t;fw='700';}
+        else if(p.adv){bg=BR_GREEN_BG;fg=BR_GREEN;fw='700';}
+        h+='<div style="display:flex;justify-content:space-between;gap:8px;background:'+bg+';color:'+fg+';font-weight:'+fw+
+          ';padding:6px 10px;border-bottom:1px solid #efe4c8;font-size:13px">'+
+          '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</span>'+
+          '<span style="font-variant-numeric:tabular-nums">'+fmt(p.total)+'</span></div>';
+      });
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+/* ---- 画到 canvas 供离线 PDF 使用（横向 A4，铺满整页） ---- */
+var BR_W=2339,BR_H=1654;                        // A4 横向 @200dpi
+var BR_PT_W=841.89,BR_PT_H=595.28;
+function pdfRenderBracket(t){
+  var m=bracketModel(t);
+  if(!m)return [];
+  var cv=document.createElement('canvas');cv.width=BR_W;cv.height=BR_H;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,BR_W,BR_H);
+  ctx.textBaseline='middle';ctx.textAlign='left';
+
+  ctx.font=pdfFont(40,true);ctx.fillStyle='#10333f';
+  ctx.fillText(pdfEllipsis(ctx,t.name+' · 淘汰赛对阵图',BR_W-160),70,80);
+  ctx.strokeStyle='#e8a33d';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(70,112);ctx.lineTo(BR_W-70,112);ctx.stroke();
+
+  var colW=640,gapX=120,x0=70;
+  var rowH=58,headH=14,boxH=function(b){return headH+b.players.length*rowH;};
+  var y0=230,colGap=76;
+  var boxes=m.map(function(col){return col.boxes;});
+  var cy=[];
+  var y=y0;
+  cy[0]=boxes[0].map(function(b){var c=y+boxH(b)/2;y+=boxH(b)+colGap;return c;});
+  for(var c=1;c<boxes.length;c++){
+    cy[c]=boxes[c].map(function(b,i){
+      var a=cy[c-1][i*2],d=cy[c-1][i*2+1];
+      return (a==null?d:(d==null?a:(a+d)/2));
+    });
+  }
+  var maxY=y;
+  boxes.forEach(function(list,c){list.forEach(function(b,i){maxY=Math.max(maxY,cy[c][i]+boxH(b)/2);});});
+  var availTop=190,availBottom=BR_H-70;
+  var off=Math.round((availTop+availBottom)/2-(y0+maxY)/2);
+  off=Math.max(availTop-y0,off);
+  cy=cy.map(function(arr){return arr.map(function(v){return v+off;});});
+
+  ctx.strokeStyle='#cdbd99';ctx.lineWidth=3;
+  for(var c=1;c<boxes.length;c++){
+    boxes[c].forEach(function(b,i){
+      var x1=x0+(c-1)*(colW+gapX)+colW, x2=x0+c*(colW+gapX), xm=(x1+x2)/2;
+      var a=cy[c-1][i*2],d=cy[c-1][i*2+1];
+      [a,d].forEach(function(v){if(v==null)return;ctx.beginPath();ctx.moveTo(x1,v);ctx.lineTo(xm,v);ctx.stroke();});
+      if(a!=null&&d!=null){ctx.beginPath();ctx.moveTo(xm,a);ctx.lineTo(xm,d);ctx.stroke();}
+      ctx.beginPath();ctx.moveTo(xm,cy[c][i]);ctx.lineTo(x2,cy[c][i]);ctx.stroke();
+    });
+  }
+  boxes.forEach(function(list,c){
+    list.forEach(function(b,i){
+      var x=x0+c*(colW+gapX), h=boxH(b), yTop=cy[c][i]-h/2;
+      ctx.fillStyle='#ffffff';ctx.fillRect(x,yTop,colW,h);
+      ctx.strokeStyle='#cdbd99';ctx.lineWidth=3;ctx.strokeRect(x,yTop,colW,h);
+      b.players.forEach(function(p,k){
+        var ry=yTop+headH+k*rowH;
+        if(!p){ctx.strokeStyle='#f0e9da';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+3,ry+rowH);ctx.lineTo(x+colW-3,ry+rowH);ctx.stroke();return;}
+        var bg='#ffffff',fg='#2b3741',bold=false;
+        if(p.medal!=null){bg=BR_MEDAL[p.medal].bg;fg=BR_MEDAL[p.medal].t;bold=true;}
+        else if(p.adv){bg=BR_GREEN_BG;fg=BR_GREEN;bold=true;}
+        if(bg!=='#ffffff'){ctx.fillStyle=bg;ctx.fillRect(x+3,ry,colW-6,rowH);}
+        ctx.font=pdfFont(28,bold);ctx.fillStyle=fg;
+        var tw=ctx.measureText(fmt(p.total)).width;
+        ctx.fillText(pdfEllipsis(ctx,p.name,colW-46-tw),x+22,ry+rowH/2);
+        ctx.fillText(fmt(p.total),x+colW-22-tw,ry+rowH/2);
+      });
+    });
+    ctx.font=pdfFont(30,true);ctx.fillStyle='#10333f';ctx.textAlign='center';
+    ctx.fillText(m[c].title,x0+c*(colW+gapX)+colW/2,155);
+    ctx.textAlign='left';
+  });
+  return [cv];
+}
+
+function pdfChooseBracket(){
+  var t=curT();
+  if(!t){uiAlert('请先选择赛事');return;}
+  if(!t.elimination||!t.elimination.rounds.length){uiAlert('还没有淘汰赛数据');return;}
+  try{
+    var cvs=pdfRenderBracket(t);
+    if(!cvs.length){uiAlert('没有可导出的对阵');return;}
+    downloadText((t.name||'好奇杯')+'·淘汰赛对阵图.pdf',pdfBuild(cvs,BR_PT_W,BR_PT_H),'application/pdf');
+    uiAlert('对阵图 PDF 已生成并开始下载。');
+  }catch(e){uiAlert('对阵图生成失败：'+(e&&e.message?e.message:e));}
+}
+function printBracket(){
+  var t=curT();
+  if(!t){uiAlert('请先选择赛事');return;}
+  if(!t.elimination||!t.elimination.rounds.length){uiAlert('还没有淘汰赛数据');return;}
+  var pa=document.getElementById('printArea');
+  pa.innerHTML='<div class="bracket-wrap">'+buildBracketHTML(t)+'</div>';
+  _printSavedTitle=document.title;
+  document.title=(t.name||'好奇杯')+'·淘汰赛对阵图';
+  openPrintPreview();
+}
+function saveBracketHtml(){
+  var t=curT();
+  if(!t){uiAlert('请先选择赛事');return;}
+  if(!t.elimination||!t.elimination.rounds.length){uiAlert('还没有淘汰赛数据');return;}
+  var css='body{margin:0;padding:18px 22px;background:#fff;font:13px/1.5 "Microsoft YaHei",system-ui,sans-serif;color:#2b3741}'+
+    'h1{font-size:20px;margin:6px 0 4px;color:#10333f;border-bottom:2px solid #e8a33d;padding-bottom:6px}'+
+    '@page{size:A4 portrait;margin:10mm}';
+  downloadText((t.name||'好奇杯')+'·淘汰赛对阵图.html',
+    '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>'+(t.name||'')+' 淘汰赛对阵图</title><style>'+css+'</style></head><body>'+
+    buildBracketHTML(t)+'</body></html>','text/html;charset=utf-8');
+  uiAlert('已另存为独立 HTML。双击用浏览器打开后按 Ctrl+P 即可得到文字版 PDF。');
+}
+
+var _printSavedTitle=null;
+function openPrintPreview(){
+  document.body.classList.add('print-preview');
+  var bar=document.getElementById('printBar');
+  if(bar)bar.style.display='flex';
+  printNow();          // 同步调用，保住这次点击的用户手势
+}
+function closePrintPreview(){
+  document.body.classList.remove('print-preview');
+  var bar=document.getElementById('printBar');
+  if(bar)bar.style.display='none';
+  if(_printSavedTitle!=null){document.title=_printSavedTitle;_printSavedTitle=null;}
+}
+function printNow(){
+  // 部分环境（内嵌预览框、沙箱 iframe、被策略限制的浏览器）会静默忽略 window.print()，
+  // 而浏览器自己的 Ctrl+P 不受影响。用 beforeprint 事件判断这次调用到底有没有被响应。
+  var fired=false;
+  function mark(){fired=true;}
+  try{window.addEventListener('beforeprint',mark);}catch(e){}
+  try{window.print();}catch(e){}
+  var err=null;
+  if(!fired){
+    // 退一步试老接口
+    try{document.execCommand('print',false,null);}catch(e){err=e;}
+  }
+  try{window.removeEventListener('beforeprint',mark);}catch(e){}
+  if(fired)return;
+  if(typeof setTimeout!=='function')return;
+  setTimeout(function(){
+    if(fired)return;
+    var embedded=false;
+    try{embedded=window.self!==window.top;}catch(e){embedded=true;}
+    uiAlert('浏览器没有响应网页发起的打印请求，但快捷键是可以用的。\n\n'+
+      (embedded
+        ? '原因：这个页面正被嵌在别的程序（预览框／内嵌浏览器）里打开，这种环境禁止网页自己唤起打印。\n把 HTML 文件直接拖进浏览器标签页打开，或把文件关联改成用 Edge/Chrome 打开，就能正常导出。\n\n'
+        : '原因：当前浏览器环境限制了网页发起的打印。\n\n')+
+      '现在就能用的办法：这个预览页已经铺好了，直接按 Ctrl+P（Mac 为 ⌘+P）→ 目标选「另存为 PDF」→ 保存。');
+  },700);
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('afterprint',function(){
+    if(_printSavedTitle!=null){document.title=_printSavedTitle;_printSavedTitle=null;}
+  });
+}
+function showExportModal(type){
+  var t=curT();
+  var body='';
+  if(type==='qual'){
+    body='<div class="modal-msg">选择导出范围（晋级赛）</div><div class="modal-actions" style="flex-direction:column;align-items:stretch">'+
+      '<div class="muted" style="margin-bottom:4px">⬇ 直接下载 PDF 文件（不走打印）：</div>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'qual\',{})">全部（各轮结果 + 排名）</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'qual\',{sheet:\'match\'})">各轮对阵（座位表）</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'qual\',{sheet:\'result\'})">各轮结果（每桌成绩）</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'qual\',{rankOnly:true})">仅排名</button>'+
+      '<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">真·文字版 PDF（用浏览器打开后 Ctrl+P）：</div>'+
+      '<button onclick="closeModal();pdfSaveHtml(\'qual\',{})">另存为独立 HTML（全部）</button>'+
+      '<button onclick="closeModal();pdfSaveHtml(\'qual\',{rankOnly:true})">另存为独立 HTML（仅排名）</button>'+
+      '<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">打印 / 另存为 PDF：</div>'+
+      '<button onclick="closeModal();exportPDF({mode:\'qual\'})">全部（各轮成绩+排名）</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'qual\',rankOnly:true})">仅排名</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'qual\'})">全部（各轮成绩+排名）</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'qual\',sheet:\'match\'})">各轮对阵</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'qual\',sheet:\'result\'})">各轮结果</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'qual\',rankOnly:true})">仅排名</button>';
+    if(t&&t.qualifier&&t.qualifier.rounds&&t.qualifier.rounds.length){
+      body+='<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">单轮导出：</div>';
+      t.qualifier.rounds.forEach(function(r){
+        body+='<button class="small" onclick="closeModal();pdfChoose(\'qual\',{round:'+r.roundNo+',sheet:\'match\'})">第'+r.roundNo+'轮·对阵·PDF</button>';
+        body+='<button class="small" onclick="closeModal();pdfChoose(\'qual\',{round:'+r.roundNo+',sheet:\'result\'})">第'+r.roundNo+'轮·结果·PDF</button>';
+        body+='<button class="small" onclick="closeModal();exportPDF({mode:\'qual\',round:'+r.roundNo+',sheet:\'match\'})">第'+r.roundNo+'轮·对阵·打印</button>';
+        body+='<button class="small" onclick="closeModal();exportPDF({mode:\'qual\',round:'+r.roundNo+',sheet:\'result\'})">第'+r.roundNo+'轮·结果·打印</button>';
+      });
+    }
+    body+='<button class="gray" onclick="closeModal()">取消</button></div>';
+  }else if(type==='elim'){
+    body='<div class="modal-msg">选择导出范围（淘汰赛）</div><div class="modal-actions" style="flex-direction:column;align-items:stretch">'+
+      '<div class="muted" style="margin-bottom:4px">⬇ 直接下载 PDF 文件（不走打印）：</div>'+
+      '<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">对阵图（只有昵称+总分，晋级标绿，决赛冠亚季军标金银棕）：</div>'+
+      '<button class="orange" onclick="closeModal();pdfChooseBracket()">⬇ 直接下载 PDF 对阵图</button>'+
+      '<button onclick="closeModal();printBracket()">打印 / 另存为 PDF 对阵图</button>'+
+      '<button onclick="closeModal();saveBracketHtml()">另存为独立 HTML 对阵图</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'elim\',{})">全部（各轮结果 + 最终排名）</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'elim\',{sheet:\'match\'})">各轮对阵（座位表）</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'elim\',{sheet:\'result\'})">各轮结果（每桌成绩）</button>'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'elim\',{rankOnly:true})">仅最终排名</button>'+
+      '<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">真·文字版 PDF（用浏览器打开后 Ctrl+P）：</div>'+
+      '<button onclick="closeModal();pdfSaveHtml(\'elim\',{})">另存为独立 HTML（全部）</button>'+
+      '<button onclick="closeModal();pdfSaveHtml(\'elim\',{rankOnly:true})">另存为独立 HTML（仅最终排名）</button>'+
+      '<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">打印 / 另存为 PDF：</div>'+
+      '<button onclick="closeModal();exportPDF({mode:\'elim\'})">全部（各轮成绩+最终排名）</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'elim\',rankOnly:true})">仅最终排名</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'elim\'})">全部（各轮成绩+最终排名）</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'elim\',sheet:\'match\'})">各轮对阵</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'elim\',sheet:\'result\'})">各轮结果</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'elim\',rankOnly:true})">仅最终排名</button>';
+    if(t&&t.elimination&&t.elimination.rounds&&t.elimination.rounds.length){
+      body+='<hr style="margin:10px 0;border:none;border-top:1px solid #e5e7eb"><div class="muted" style="margin-bottom:4px">单轮导出：</div>';
+      t.elimination.rounds.forEach(function(r){
+        body+='<button class="small" onclick="closeModal();pdfChoose(\'elim\',{round:'+r.roundNo+',sheet:\'match\'})">'+roundTitle(r.roundNo)+'·对阵·PDF</button>';
+        body+='<button class="small" onclick="closeModal();pdfChoose(\'elim\',{round:'+r.roundNo+',sheet:\'result\'})">'+roundTitle(r.roundNo)+'·结果·PDF</button>';
+        body+='<button class="small" onclick="closeModal();exportPDF({mode:\'elim\',round:'+r.roundNo+',sheet:\'match\'})">'+roundTitle(r.roundNo)+'·对阵·打印</button>';
+        body+='<button class="small" onclick="closeModal();exportPDF({mode:\'elim\',round:'+r.roundNo+',sheet:\'result\'})">'+roundTitle(r.roundNo)+'·结果·打印</button>';
+      });
+    }
+    body+='<button class="gray" onclick="closeModal()">取消</button></div>';
+  }else if(type==='result'){
+    exportPDF({mode:'elim',resultOnly:true,sheet:undefined});
+    return;
+  }else if(type==='board'){
+    body='<div class="modal-msg">导出积分榜</div><div class="modal-actions" style="flex-direction:column;align-items:stretch">'+
+      '<button class="green" onclick="closeModal();pdfChoose(\'board\',{})">⬇ 直接下载 PDF（不走打印）</button>'+
+      '<button onclick="closeModal();exportPDF({mode:\'board\'})">打印 / 另存为 PDF</button>'+
+      '<button class="gray" onclick="closeModal()">取消</button></div>';
+    openModal('<div class="modal-box">'+body+'</div>');
+    return;
+  }
+  openModal('<div class="modal-box">'+body+'</div>');
+}
+function roundTablesHTML(t,r,opts){
+  var h='';
+  if(opts&&opts.sheet==='match'){
+    h+='<div class="flex-table"><table class="match-sheet"><tr><th>桌号</th><th>座位1</th><th>座位2</th><th>座位3</th><th>座位4</th></tr>';
+    r.tables.forEach(function(tb,ti){
+      h+='<tr><td class="tnum">桌'+(ti+1)+'</td>';
+      tb.players.forEach(function(pid){
+        var p=getP(t,pid);
+        h+='<td class="seat-cell '+(p.withdrawn?'wd':(p.disqualified?'dq':''))+'">'+esc(p.name)+(p.withdrawn?' <span class="tag wd">退赛</span>':'')+(p.disqualified?' <span class="tag dq">取消资格</span>':'')+'</td>';
+      });
+      for(var i=tb.players.length;i<4;i++)h+='<td class="empty-seat">—</td>';
+      h+='</tr>';
+    });
+    h+='</table></div>';
+  }else{
+    // 结果模式：每桌独立表格，按桌分组便于查看
+    r.tables.forEach(function(tb,ti){
+      var n=tb.players.length;
+      h+='<h3>桌'+(ti+1)+(n<4?'（'+n+'人桌）':'')+'</h3>';
+      h+='<div class="flex-table"><table>';
+      h+='<tr><th>昵称</th><th>半庄1顺</th><th>半庄1分</th><th>半庄2顺</th><th>半庄2分</th><th>特殊</th><th>轮top</th><th>扣分</th><th>小分</th><th>本轮总分</th></tr>';
+      tb.players.forEach(function(pid){
+        var p=getP(t,pid);var d=tb.detail[pid]||defaultQualDetail(p);
+        if(!p){h+='<tr class="wd"><td colspan="20" style="text-align:left;color:#999">⚠ 已删除</td></tr>';return;}
+        h+='<tr class="'+(p.withdrawn?'wd':(p.disqualified?'dq':''))+'">';
+        h+='<td style="text-align:left">'+esc(p.name)+(p.withdrawn?' <span class="tag wd">退赛</span>':'')+(p.disqualified?' <span class="tag dq">取消资格</span>':'')+'</td>';
+        h+='<td>'+fmt(d.ranks[0])+'</td><td>'+fmt(d.scores[0])+'</td><td>'+fmt(d.ranks[1])+'</td><td>'+fmt(d.scores[1])+'</td>';
+        h+='<td>'+fmt(d.special||0)+'</td>';
+        h+='<td>'+fmt(d.topBonusManual!=null?d.topBonusManual:d.topBonus)+'</td>';
+        h+='<td>'+fmt(d.penalty||0)+'</td>';
+        h+='<td>'+(d.ranks?d.ranks.map(fmt).join('·'):'')+'</td>';
+        h+='<td><b>'+fmt(d._roundTotal)+'</b></td></tr>';
+      });
+      h+='</table></div>';
+    });
+  }
+  return h;
+}
+function qualRankTableHTML(t){
+  var q=t.qualifier;
+  var cum=computeQualCumulative(t);
+  var hl=q.rankConfirmed?(new Set(q.promoted||[])):livePromotedSet(t);
+  var eqr=effectiveQualRanking(t);
+  // 分两张表：纵向 A4 放不下 17 列，拆开后列全部保留且不必缩字号
+  var h='<h3>晋级赛排名</h3><div class="flex-table"><table class="rank-tbl"><thead>';
+  h+='<tr><th>排名</th><th>昵称</th>';
+  q.rounds.forEach(function(r,i){h+='<th>第'+(i+1)+'轮</th>';});
+  h+='<th>修正</th><th>当前总得分</th><th>轮均顺位</th></tr></thead><tbody>';
+  cum.forEach(function(m,i){
+    var p=getP(t,m.pid);
+    var isProm=hl.has(m.pid);
+    var isSub=isProm&&eqr.indexOf(m.pid)>=CONFIG.PROMOTE_TO_ELIM;
+    h+='<tr class="'+(isProm?'promote':'')+(p.withdrawn?' withdrawn':'')+(p.disqualified?' disqualified':'')+'">';
+    h+='<td>'+(i+1)+'</td><td style="text-align:left">'+esc(p.name)+(isSub?' <span class="tag sub">递补</span>':'')+tagsOf(t,p)+'</td>';
+    q.rounds.forEach(function(r,ri){var v=m.perRound[ri];h+='<td>'+(v==null?'—':fmt(v))+'</td>';});
+    h+='<td>'+(m.fix?fmt(m.fix):'—')+'</td><td><b>'+fmt(m.total)+'</b></td><td>'+avgRank(m)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<h3>晋级赛排名 · 明细</h3><div class="flex-table"><table class="rank-tbl"><thead>';
+  h+='<tr><th>排名</th><th>昵称</th><th>一位</th><th>二位</th><th>三位</th><th>四位</th><th>迟到</th><th>缺席</th><th>轮top次数</th><th>轮top加分</th><th>特殊加分</th></tr></thead><tbody>';
+  cum.forEach(function(m,i){
+    var p=getP(t,m.pid);
+    h+='<tr class="'+(hl.has(m.pid)?'promote':'')+(p.withdrawn?' withdrawn':'')+(p.disqualified?' disqualified':'')+'">';
+    h+='<td>'+(i+1)+'</td><td style="text-align:left">'+esc(p.name)+tagsOf(t,p)+'</td>';
+    h+='<td>'+m.one+'</td><td>'+m.two+'</td><td>'+m.three+'</td><td>'+m.four+'</td>';
+    h+='<td>'+m.late+'</td><td>'+m.absent+'</td><td>'+m.topCount+'</td><td>'+fmt(m.topBonusSum)+'</td><td>'+fmt(m.specialSum)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  return h;
+}
+function buildQualifierHTML(t,opts){
+  opts=opts||{};
+  var q=t.qualifier;
+  var rounds=opts.round?q.rounds.filter(function(r){return r.roundNo===opts.round;}):q.rounds;
+  var h='<h1>'+esc(t.name)+'·晋级赛</h1>';
+  h+='<p class="muted">'+new Date(t.createdAt).toLocaleString('zh-CN')+'</p>';
+  if(!opts.rankOnly){
+    rounds.forEach(function(r){
+      h+='<h2'+(r.roundNo>1?' class="page-break"':'')+'>第'+r.roundNo+'轮'+(opts.sheet==='match'?'·对阵':(opts.sheet==='result'?'·结果':''))+'</h2>';
+      h+=roundTablesHTML(t,r,{sheet:opts.sheet||'result'});
+    });
+    if(!opts.sheet){
+      h+='<h2 class="page-break">晋级赛排名</h2>';
+      h+=qualRankTableHTML(t);
+    }
+  }else{
+    h+='<h2>晋级赛排名</h2>';
+    h+=qualRankTableHTML(t);
+  }
+  return h;
+}
+function elimTablesHTML(t,r,opts){
+  var isFinal=r.roundNo>=3;
+  var h='';
+  if(opts&&opts.sheet==='match'){
+    h+='<div class="flex-table"><table class="match-sheet"><tr><th>桌号</th><th>座位1</th><th>座位2</th><th>座位3</th><th>座位4</th></tr>';
+    r.tables.forEach(function(tb,ti){
+      h+='<tr><td class="tnum">桌'+(ti+1)+'</td>';
+      tb.players.forEach(function(pid){
+        var p=getP(t,pid);
+        h+='<td class="seat-cell '+(p.withdrawn?'wd':(p.disqualified?'dq':''))+'">'+esc(p.name)+(p.withdrawn?' <span class="tag wd">退赛</span>':'')+(p.disqualified?' <span class="tag dq">取消资格</span>':'')+'</td>';
+      });
+      for(var i=tb.players.length;i<4;i++)h+='<td class="empty-seat">—</td>';
+      h+='</tr>';
+    });
+    h+='</table></div>';
+  }else{
+    // 结果模式：每桌独立表格，按桌分组便于查看
+    r.tables.forEach(function(tb,ti){
+      var n=tb.players.length;
+      h+='<h3>桌'+(ti+1)+(n<4?'（'+n+'人桌）':'')+'</h3>';
+      h+='<div class="flex-table"><table>';
+      h+='<tr><th>昵称</th>';
+      for(var i=0;i<CONFIG.ELIM_MATCHES_PER_ROUND;i++)h+='<th>半庄'+(i+1)+'顺</th><th>半庄'+(i+1)+'分</th>';
+      h+='<th>特殊</th><th>扣分</th><th>小分</th><th>本轮总分</th>'+(isFinal?'<th>加赛顺位</th><th>加赛得分</th>':'')+'</tr>';
+      tb.players.forEach(function(pid){
+        var p=getP(t,pid);var d=tb.detail[pid]||defaultElimDetail(p);
+        if(!p){h+='<tr class="wd"><td colspan="20" style="text-align:left;color:#999">⚠ 已删除</td></tr>';return;}
+        h+='<tr class="'+(p.withdrawn?'wd':(p.disqualified?'dq':''))+'">';
+        h+='<td style="text-align:left">'+esc(p.name)+(p.withdrawn?' <span class="tag wd">退赛</span>':'')+(p.disqualified?' <span class="tag dq">取消资格</span>':'')+(d._sub?' <span class="tag sub">递补</span>':'')+'</td>';
+        for(i=0;i<CONFIG.ELIM_MATCHES_PER_ROUND;i++){
+          h+='<td>'+fmt(d.ranks[i])+'</td><td>'+fmt(d.scores[i])+'</td>';
+        }
+        h+='<td>'+fmt(d.special||0)+'</td><td>'+fmt(d.penalty||0)+'</td>';
+        h+='<td>'+(d.ranks?d.ranks.map(fmt).join('·'):'')+'</td>';
+        h+='<td><b>'+fmt(d._total)+'</b></td>';
+        if(isFinal)h+='<td>'+(d.playoffRank!=null?fmt(d.playoffRank):'')+'</td><td>'+(d.playoffScore!=null?fmt(d.playoffScore):'')+'</td>';
+        h+='</tr>';
+      });
+      h+='</table></div>';
+    });
+  }
+  return h;
+}
+function finalRankingExportHTML(t){
+  var elim=t.elimination;
+  var fr=elim.finalRanking;
+  var pts=computePoints(t);
+  var eqr=effectiveQualRanking(t);
+  var medals=['冠军','亚军','季军','殿军'];
+  var h='<div class="flex-table"><table class="rank-tbl"><thead>';
+  h+='<tr><th>名次</th><th>昵称</th><th>晋级赛排名</th><th>晋级赛积分</th><th>淘汰赛积分</th><th>总积分</th></tr></thead><tbody>';
+  fr.forEach(function(pid,i){
+    var p=getP(t,pid);
+    var pt=pts[p.name]||{elim:0,qual:0,dq:false};
+    var qr=eqr.indexOf(pid)+1;
+    var markWd=shouldMarkWd(t,p);
+    h+='<tr class="'+(i<16?'promote':'')+(markWd?' wdrow':'')+'"><td><b>'+rankLabelOf(i,medals)+'</b></td>';
+    h+='<td style="text-align:left">'+esc(p.name)+' '+finalTagsOf(t,p)+'</td>';
+    h+='<td>'+(qr||'—')+'</td>';
+    h+='<td>'+(pt.dq?'—':fmt(pt.qual))+'</td>';
+    h+='<td>'+(pt.dq?'—':fmt(pt.elim))+'</td>';
+    h+='<td><b>'+(pt.dq?'—':fmt(pt.elim+pt.qual))+'</b></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  return h;
+}
+function buildEliminationHTML(t,opts){
+  opts=opts||{};
+  var elim=t.elimination;
+  if(!elim)return '<h1>暂无淘汰赛数据</h1>';
+  var rounds=opts.round?elim.rounds.filter(function(r){return r.roundNo===opts.round;}):elim.rounds;
+  var h='<h1>'+esc(t.name)+'·淘汰赛</h1>';
+  h+='<p class="muted">'+new Date(t.createdAt).toLocaleString('zh-CN')+'</p>';
+  if(!opts.rankOnly){
+    rounds.forEach(function(r){
+      h+='<h2'+(r.roundNo>1?' class="page-break"':'')+'>'+roundTitle(r.roundNo)+(r.confirmed?'':'（未确认）')+'</h2>';
+      h+=elimTablesHTML(t,r,{sheet:opts.sheet||'result'});
+    });
+    if(!opts.sheet){
+      if(elim.finalRanking&&elim.finalRanking.length){
+        h+='<h2 class="page-break">最终排名（1-'+elim.finalRanking.length+'）</h2>';
+        h+=finalRankingExportHTML(t);
+      }
+    }
+  }else{
+    if(elim.finalRanking&&elim.finalRanking.length){
+      h+='<h2>最终排名（1-'+elim.finalRanking.length+'）</h2>';
+      h+=finalRankingExportHTML(t);
+    }
+  }
+  return h;
+}
+function buildScoreboardHTML(){
+  var board=computeLeaderboard();
+  var done=completedTournaments().slice(0,CONFIG.ROLLING_SEASONS);
+  var h='<h1>好奇杯积分榜（滚动最近 '+CONFIG.ROLLING_SEASONS+' 届）</h1>';
+  h+='<div class="flex-table"><table>';
+  h+='<tr><th>排名</th><th>选手</th>';
+  done.forEach(function(t){h+='<th>'+esc(t.name)+'</th>';});
+  h+='<th>累计</th></tr>';
+  board.forEach(function(r,i){
+    h+='<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.name)+'</td>';
+    done.forEach(function(t){
+      var v=null;
+      var over=t.pointOverrides[r.name];
+      if(over!=null)v=over;
+      else{
+        var ss=r.seasons.filter(function(s){return s.tid===t.id;});
+        if(ss.length)v=ss.reduce(function(a,s){return a+s.points;},0);
+      }
+      h+='<td>'+(v!=null?fmt(v):'')+'</td>';
+    });
+    h+='<td><b>'+fmt(r.total)+'</b></td></tr>';
+  });
+  h+='</table></div>';
+  return h;
+}
+function exportInvites(){
+  var inv=inviteList();
+  var txt='好奇杯直邀名单\n导出时间：'+new Date().toLocaleString('zh-CN')+'\n\n';
+  var top=inv.filter(function(x){return !x.lastElim;});
+  var last=inv.filter(function(x){return x.lastElim;});
+  if(top.length){
+    txt+='⭐ 积分前'+CONFIG.INVITE_TOP_N+'（直邀）：\n';
+    top.forEach(function(x,i){txt+=(i+1)+'. '+x.name+'（累计 '+fmt(x.total)+' 分）\n';});
+  }
+  if(last.length){
+    txt+='\n🏆 上届16强：\n';
+    last.forEach(function(x,i){txt+=(i+1)+'. '+x.name+'（累计 '+fmt(x.total)+' 分）\n';});
+  }
+  var ts=new Date();
+  downloadText('好奇杯直邀名单_'+ts.getFullYear()+pad(ts.getMonth()+1)+pad(ts.getDate())+'.txt',txt,'text/plain;charset=utf-8');
+}
+
+/* ==== 模块11：初始化 ==== */
+document.getElementById('importFile').addEventListener('change',doImport);
+document.getElementById('csvFile').addEventListener('change',onCsvPicked);
+render();
+</script>
+</body>
+</html>
