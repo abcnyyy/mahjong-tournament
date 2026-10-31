@@ -348,10 +348,9 @@ function stageConfigView(t, st){
          + segHtml('em', [['RAW', '原始点数'], ['ADJUSTED', '含名次修正的点数']], st.scoring.entryMode || 'RAW', 'stSetEntryMode')
          + '</div><div class="tiny" style="margin:-6px 0 8px">选「含名次修正」时：录入框里填已经加过名次修正的点数，系统用「录入值 − 名次修正」反推出原始点数，作为破同分的小分。</div>';
     }
-    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">每轮 TOP 加分</label>';
-    if (st.scoring.topBonus.on){
-      h += '<div class="field"><label>TOP 加分（按同桌并列第一名人数，逗号分隔：1人/2人/3人/4人）</label>'
-         + '<input class="input" value="' + st.scoring.topBonus.values.join(',') + '" onchange="stSetTopBonusValues(this.value)"></div>';
+    if (st.scoring.topBonus && st.scoring.topBonus.on){
+      h += '<div class="notice">旧版数据里的「TOP 加分」仍在生效（' + st.scoring.topBonus.values.join(' / ') + '）。它已与名次分合并：'
+         + '把名次分表的 1 位改成对应分值即可停用。<button class="btn xs ghost" style="margin-left:6px" onclick="disableLegacyTopBonus()">停用旧 TOP 加分</button></div>';
     }
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.water.on ? 'checked' : '') + ' onchange="stSetWaterOn(this.checked)">水上 / 水下修正</label>';
     if (st.scoring.water.on){
@@ -372,10 +371,8 @@ function stageConfigView(t, st){
     h += '<div class="field"><label>名次分表 · 4 人桌</label><input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
     h += '<div class="field"><label>名次分表 · 3 人桌</label><input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
-    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">每轮 TOP 加分</label>';
-    if (st.scoring.topBonus.on){
-      h += '<div class="field"><label>TOP 加分（1人/2人/3人/4人并列）</label>'
-         + '<input class="input" value="' + st.scoring.topBonus.values.join(',') + '" onchange="stSetTopBonusValues(this.value)"></div>';
+    if (st.scoring.topBonus && st.scoring.topBonus.on){
+      h += '<div class="notice">旧版「TOP 加分」仍在生效（' + st.scoring.topBonus.values.join(' / ') + '），已并入名次分表。<button class="btn xs ghost" style="margin-left:6px" onclick="disableLegacyTopBonus()">停用</button></div>';
     }
     h += '<label class="check"><input type="checkbox" ' + (st.elim.carry ? 'checked' : '') + ' onchange="stSetElimCarry(this.checked)">轮与轮之间继承分数（不清零）</label>';
     if (st.format === 'DOUBLE'){
@@ -567,6 +564,11 @@ function stSetRankTable(n, v){
   save(); render();
 }
 function stSetTopBonus(on){ var st = curStage(); st.scoring.topBonus.on = !!on; save(); render(); }
+function disableLegacyTopBonus(){
+  var st = curStage();
+  st.scoring.topBonus.on = false;
+  save(); render(); toast('已停用旧 TOP 加分', 'ok');
+}
 function stSetTopBonusValues(v){
   var st = curStage();
   var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });

@@ -417,7 +417,7 @@ check('反推：小分=录入值−名次修正', JSON.stringify(o.adjRaws) === 
 check('反推：排名与总分一致', o.adjTopPid === o.adjSeat0Pid && o.adjTopRaw === 29950, [o.adjTopPid, o.adjSeat0Pid, o.adjTopRaw]);
 check('名次分按每局累加', JSON.stringify(o.handPoints) === JSON.stringify([15, 0, 0, 5]), o.handPoints);
 check('每轮+每局共存相加', JSON.stringify(o.bothPoints) === JSON.stringify([25, -2.5, -2.5, 10]), o.bothPoints);
-check('TOP 加分可自定义', o.topBonusPoint === 45, o.topBonusPoint);
+check('旧版 TOP 加分兼容', o.topBonusPoint === 45, o.topBonusPoint);
 check('阶段积分叠加为总分', o.stageSum === 20 && o.stageNote.indexOf('+') > 0, [o.stageSum, o.stageNote]);
 check('阶段积分单独计算不计入总分', o.stageNoStack === 10, o.stageNoStack);
 check('每轮 3 局名次分累加', o.threeHalvesPoint === 80, o.threeHalvesPoint);
