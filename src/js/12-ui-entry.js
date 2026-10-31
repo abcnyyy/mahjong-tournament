@@ -182,6 +182,7 @@ function stageEntryView(t, st){
   } else if (open){
     h += '<button class="btn primary" onclick="doConfirmRound()">✔ 确认第 ' + open.no + ' 轮</button>';
     h += '<button class="btn ghost" onclick="doRegenerateRound()">🎲 重新分桌</button>';
+    h += '<button class="btn ghost" onclick="csvImportDialog()">📥 导入牌谱 CSV</button>';
     h += '<button class="btn ghost" onclick="openSeatEditor()">⇄ 手动换座</button>';
     if (st.rounds.length > 1 || open.no > 1) h += '<button class="btn ghost" onclick="doRollbackRound()">↩ 回退</button>';
   } else {

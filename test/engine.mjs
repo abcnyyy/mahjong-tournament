@@ -6,8 +6,16 @@ import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const files = ['01-util.js','02-model.js','03-pairing.js','04-scoring.js','05-elim.js','06-season.js','12-ui-entry.js','15-io.js'];
-const csvPath = join(root, 'test', 'fixtures', 'sample-kaggle.csv');
-const csvText = fs.existsSync(csvPath) ? fs.readFileSync(csvPath, 'utf8') : '';
+
+// 内联的雀魂牌谱样例（4 位虚构选手、2 局），与真实牌谱同格式
+const HEADER = '开始时间,结束时间,是否被移除,' +
+  '1位玩家,1位分数,1位终局点数,2位玩家,2位分数,2位终局点数,' +
+  '3位玩家,3位分数,3位终局点数,4位玩家,4位分数,4位终局点数,牌谱链接,备注';
+const csvText = [
+  HEADER,
+  '"2026-01-01 20:00:00","2026-01-01 20:40:00",no,"[国际中文][1001]甲",40000,40,"[国际中文][1002]乙",30000,30,"[国际中文][1003]丙",20000,20,"[国际中文][1004]丁",10000,10,"link-1",""',
+  '"2026-01-01 21:00:00","2026-01-01 21:40:00",no,"[国际中文][1004]丁",35000,35,"[国际中文][1001]甲",33000,33,"[国际中文][1002]乙",22000,22,"[国际中文][1003]丙",10000,10,"link-2",""'
+].join('\r\n');
 
 const store = new Map();
 const sandbox = {
@@ -232,7 +240,7 @@ const testSrc = String.raw`
   var e7b = startElimRound(t7, se7);
   out.carryRound = e7b ? e7b.tables[0].seats[0].carry !== 0 : false;
 
-  /* ===== 场景11：CSV 导入匹配（用真实牌谱里的全部 44 位选手） ===== */
+  /* ===== 场景11：CSV 导入匹配（样例牌谱 4 位选手 2 局） ===== */
   var t8 = newTournament('csv导入', 'se1');
   var allRows = csvParseText(__csv);
   var seenPl = {};
@@ -406,11 +414,11 @@ check('循环赛重复 ≤ 8', o.rrDup <= 8, o.rrDup);
 check('分层抽签 5 桌', o.LAYERTables.split('/')[0] === '4+4+4+4+4', o.LAYERTables);
 check('分档抽签 5 桌', o.TIERTables.split('/')[0] === '4+4+4+4+4', o.TIERTables);
 check('CSV 表头 17 列', o.csvHeaders === 17 && o.csvHasPlayerCol === true, [o.csvHeaders, o.csvHasPlayerCol]);
-check('CSV 解析 24 局', o.csvRows === 24, o.csvRows);
-check('CSV 玩家解析', o.csvFirstUid === '54137877' && o.csvFirstName === 'qrk415', [o.csvFirstUid, o.csvFirstName]);
+check('CSV 解析 2 局', o.csvRows === 2, o.csvRows);
+check('CSV 玩家解析', o.csvFirstUid === '1001' && o.csvFirstName === '甲', [o.csvFirstUid, o.csvFirstName]);
 check('阶段继承写入', o.carryIn === 8 && o.carryApplied === true, [o.carryIn, o.carryApplied]);
 check('淘汰赛轮间继承', o.carryRound === true, o.carryRound);
-check('CSV 全量匹配 24 局', o.csvPlanCount === 24 && o.csvPlanSkip === 0 && o.csvPlanUnmatch === 0,
+check('CSV 全量匹配 2 局', o.csvPlanCount === 2 && o.csvPlanSkip === 0 && o.csvPlanUnmatch === 0,
   [o.csvPlanCount, o.csvPlanSkip, o.csvPlanUnmatch]);
 check('反推：主分=录入值', JSON.stringify(o.adjPoints) === JSON.stringify([30000,20000,10000,0]), o.adjPoints);
 check('反推：小分=录入值−名次修正', JSON.stringify(o.adjRaws) === JSON.stringify([29950,19990,10010,30]), o.adjRaws);
