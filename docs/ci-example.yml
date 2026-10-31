@@ -1,0 +1,25 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 引擎测试
+        run: node test/engine.mjs
+      - name: 渲染测试
+        run: node test/render.mjs
+      - name: 构建单文件 HTML
+        run: node build.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mahjong-tournament-html
+          path: dist/麻将赛事管理.html

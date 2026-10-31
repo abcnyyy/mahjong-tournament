@@ -1,5 +1,8 @@
 # 麻将赛事管理 · Mahjong Tournament Manager
 
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![platform](https://img.shields.io/badge/platform-Web%20%7C%20Windows%20%7C%20Android-blue.svg)](#快速开始)
+
 纯本地运行的通用麻将赛事管理系统。一个单文件网页，同时打包成 **Windows EXE** 与 **Android APK**，不需要服务器、不需要联网。
 
 支持多阶段多赛制、四种积分赛编排、排名分与纯分数两种计分、阶段与轮次分数继承、自定义破同分链、赛季积分、牌谱 CSV 导入与多种导出。
@@ -241,7 +244,9 @@ dist/                 构建产物
 desktop/              Electron 外壳（main / preload）
 android/              Android WebView 外壳（Manifest / MainActivity / res）
 scripts/              构建、预览脚本
-test/                 引擎测试与渲染测试
+test/                 引擎测试与渲染测试（fixtures 里是牌谱样例）
+docs/                 需求与设计确认
+legacy/               旧版「好奇杯」单文件系统与规则存档
 ```
 
 ---
@@ -253,7 +258,7 @@ node test/engine.mjs    # 引擎逻辑：积分赛、单败、双败、三麻、
 node test/render.mjs    # 用假 DOM 渲染所有页面，抓模板错误
 ```
 
-引擎测试覆盖 30 项断言，包括：一位数统计、并列平分、手动排名、分数继承、淘汰赛轮间继承、双败 16 人名次无重复、真实牌谱 44 人 24 局全部匹配等。
+引擎测试覆盖 38 项断言，包括：一位数统计、并列平分、手动排名、分数继承、淘汰赛轮间继承、双败 16 人名次无重复、每局/每轮名次分共存、轮修正不进小分、阶段积分叠加、真实牌谱 44 人 24 局全部匹配等。
 
 ---
 
@@ -263,6 +268,17 @@ node test/render.mjs    # 用假 DOM 渲染所有页面，抓模板错误
 - Android WebView 的系统打印不可用：导出会保存 HTML 到「下载」，再用浏览器打印成 PDF。
 - 双败总决赛默认 4 人桌，可在阶段配置切换。
 - 浏览器存储可能被清理，请用导出的 JSON 备份。
+
+## 贡献
+
+- 维护：[abcnyyy](https://github.com/abcnyyy)
+- 开发：DeepSeek Harness Agent（AI 编程助手）
+- 完整名单：[CONTRIBUTORS.md](CONTRIBUTORS.md)
+- 参与方式：[CONTRIBUTING.md](CONTRIBUTING.md)
+
+## 许可
+
+[MIT](LICENSE)
 
 ## 免责声明
 

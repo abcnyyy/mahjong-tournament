@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const files = ['01-util.js','02-model.js','03-pairing.js','04-scoring.js','05-elim.js','06-season.js','12-ui-entry.js','15-io.js'];
-const csvPath = join(root, '牌谱记录-赛事472725-好奇杯立直麻将赛.csv');
+const csvPath = join(root, 'test', 'fixtures', 'sample-kaggle.csv');
 const csvText = fs.existsSync(csvPath) ? fs.readFileSync(csvPath, 'utf8') : '';
 
 const store = new Map();
