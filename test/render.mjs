@@ -73,6 +73,7 @@ const script = String.raw`
   var ehtml = document.getElementById('app').innerHTML;
   report.push('输入框=' + (ehtml.indexOf('data-field="score"') >= 0 ? '有' : '无'));
   report.push('加分栏=' + (ehtml.indexOf('data-field="bonus"') >= 0 ? '有' : '无'));
+  report.push('牌谱导入按钮=' + (ehtml.indexOf('csvImportDialog') >= 0 ? '有' : '无'));
   ['entry','rank','advance'].forEach(function(tab){ APP.tab=tab; render(); report.push('r1/'+tab); });
   var r = st.rounds[0];
   r.tables[0].seats.forEach(function(s){ s.scores=[30000,20000]; s.ranks=[1,2]; });
