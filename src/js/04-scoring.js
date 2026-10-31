@@ -99,12 +99,13 @@ function calcRound(st, r){
         topBonus = (tot.total === maxTotal) ? num(vals[Math.min(maxCnt - 1, vals.length - 1)]) : 0;
       }
       var roundPoint = 0;
-      var rawValue = tot.total;
+      /* 小分 = 纯原始点数（各局点数之和），不含任何修正 */
+      var rawValue = tot.raw;
       if (cfg.mode === 'RANK_POINT'){
-        roundPoint = rankPoint + topBonus + water;
+        roundPoint = rankPoint + topBonus + water + num(s.bonus) - num(s.penalty);
       } else if (cfg.entryMode === 'ADJUSTED'){
-        /* 录入口径 = 已含名次修正的点数；反推原始点数作为小分 */
-        rawValue = tot.total - rankPoint;
+        /* 录入口径 = 已含名次修正的点数；反推出纯原始点数作为小分 */
+        rawValue = tot.raw - rankPoint;
         roundPoint = tot.total + topBonus + water;
       } else {
         roundPoint = tot.total + (cfg.useRankTable === false ? 0 : rankPoint) + topBonus + water;

@@ -348,6 +348,32 @@ const testSrc = String.raw`
   var ptsOne = computeTournamentPoints(tb1);
   out.stageNoStack = ptsOne[firstId] ? ptsOne[firstId].points : null;
 
+  /* ===== 场景15：轮修正只进主分、不进小分；每轮 3 局 ===== */
+  var t10 = newTournament('轮修正', 'se1');
+  for (var u = 1; u <= 4; u++) t10.players.push(newPlayer('K' + u));
+  DB.tournaments.push(t10);
+  var s10 = newStage('POINTS', '三局轮');
+  s10.halvesPerRound = 3; s10.roundCount = 1;
+  s10.scoring.mode = 'RANK_POINT';
+  s10.scoring.rankBasisRound = false;
+  s10.scoring.rankBasisHand = true;
+  s10.scoring.rankTable['4'] = [10, 5, 0, -5];
+  s10.entrants = t10.players.map(function(p){ return p.id; });
+  t10.stages.push(s10);
+  ensureEntrants(t10, s10);
+  var r10 = startPointsRound(t10, s10);
+  var seats10 = r10.tables[0].seats;
+  var vals10 = [400, 300, 200, 100];
+  seats10.forEach(function(s, si){
+    s.scores[0] = vals10[si]; s.scores[1] = vals10[si]; s.scores[2] = vals10[si];
+  });
+  seats10[0].bonus = 50;
+  r10.status = 'confirmed';
+  var rows10 = stageRanking(t10, s10);
+  var m10 = rows10.filter(function(x){ return x.pid === seats10[0].pid; })[0];
+  out.threeHalvesPoint = m10.point;
+  out.threeHalvesRaw = m10.raw;
+
   return JSON.stringify(out);
 })()
 `;
@@ -394,5 +420,7 @@ check('每轮+每局共存相加', JSON.stringify(o.bothPoints) === JSON.stringi
 check('TOP 加分可自定义', o.topBonusPoint === 45, o.topBonusPoint);
 check('阶段积分叠加为总分', o.stageSum === 20 && o.stageNote.indexOf('+') > 0, [o.stageSum, o.stageNote]);
 check('阶段积分单独计算不计入总分', o.stageNoStack === 10, o.stageNoStack);
+check('每轮 3 局名次分累加', o.threeHalvesPoint === 80, o.threeHalvesPoint);
+check('轮修正不影响小分', o.threeHalvesRaw === 1200, o.threeHalvesRaw);
 console.log(fails ? ('\n失败 ' + fails + ' 项') : '\n全部通过');
 process.exit(fails ? 1 : 0);

@@ -247,7 +247,7 @@ function roundEntryHtml(t, st, r){
       h += '<th>第' + (i + 1) + '局<br>顺位</th><th>第' + (i + 1) + '局<br>' + ptLabel + '</th>';
     }
     if (st.scoring.manual) h += '<th>加分</th><th>扣分</th><th>迟到</th><th>缺席</th>';
-    h += '<th>本轮总分</th><th>顺位</th></tr></thead><tbody>';
+    h += '<th>小分</th><th>轮修正</th><th>本轮总分</th><th>顺位</th></tr></thead><tbody>';
     tb.seats.forEach(function(s){
       var row = tc.rows.filter(function(x){ return x.pid === s.pid; })[0] || { total: 0, rank: 0, point: 0 };
       var p = getPlayer(t, s.pid);
@@ -263,7 +263,9 @@ function roundEntryHtml(t, st, r){
         h += '<td>' + cellInput(r, tb, s, 'late', -1, s.late, r.status) + '</td>';
         h += '<td>' + cellInput(r, tb, s, 'absent', -1, s.absent, r.status) + '</td>';
       }
-      h += '<td class="pts num">' + fmt(row.total) + '</td><td><b>' + row.rank + '</b></td></tr>';
+      h += '<td class="num dim">' + fmt(row.raw) + '</td>'
+         + '<td class="num dim">' + fmt(row.point - row.raw) + '</td>'
+         + '<td class="pts num">' + fmt(row.point) + '</td><td><b>' + row.rank + '</b></td></tr>';
     });
     h += '</tbody></table></div></div>';
   });
