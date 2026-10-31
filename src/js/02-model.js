@@ -68,6 +68,7 @@ function newStage(format, name){
     scoring: {
       mode: 'RANK_POINT',                // RANK_POINT 排名分 | PURE 纯分数+修正
       rankSource: 'TABLE',               // TABLE 桌内 | GLOBAL 全场
+      rankBasis: 'ROUND',                // ROUND 名次分按每轮 | HAND 名次分按每局
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
       tieSplit: true,                    // 并列顺位平分名次分
       topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 同桌并列 top 加分
@@ -78,6 +79,16 @@ function newStage(format, name){
     },
     /* 继承 */
     inherit: { mode: 'RESET', ratio: 1, includeRank: false },  // RESET | FULL | RATIO
+    /* 阶段积分（赛季积分按阶段计算） */
+    points: {
+      on: false,
+      mode: 'TABLE',                    // TABLE 名次表 | LINEAR 线性公式
+      rankTable: [100, 80, 65, 50, 40, 30, 20, 10],
+      beyond: 0,
+      linear: { max: 50, min: 10 },
+      special: { withdrawn: 10, dq: 0, unplayed: 0 },
+      stack: true                       // true 与上一阶段叠加为总积分 | false 本阶段单独计算
+    },
     /* 破同分 */
     tiebreak: { chain: ['RAW', 'AVG_RANK', 'FIRST', 'SECOND', 'LAST', 'H2H', 'SEED'] },
     /* 晋级 */
@@ -107,12 +118,13 @@ function newTable(seats){
 
 /* ---------- 规范 / 迁移 ---------- */
 function newDB(){
-  return { version: 2, seenWelcome: false, activeSeasonId: '', seasons: [], tournaments: [], settings: { orgName: '' } };
+  return { version: 2, seenWelcome: false, activeSeasonId: '', seasons: [], tournaments: [], pointTemplates: [], settings: { orgName: '' } };
 }
 function normalizeDB(d){
   if (!d || typeof d !== 'object') return newDB();
   if (!Array.isArray(d.seasons)) d.seasons = [];
   if (!Array.isArray(d.tournaments)) d.tournaments = [];
+  if (!Array.isArray(d.pointTemplates)) d.pointTemplates = [];
   if (!d.settings || typeof d.settings !== 'object') d.settings = { orgName: '' };
   d.version = 2;
   d.seenWelcome = !!d.seenWelcome;
@@ -184,6 +196,7 @@ function normalizeStage(st){
   var sc = st.scoring = st.scoring || {};
   sc.mode = sc.mode === 'PURE' ? 'PURE' : 'RANK_POINT';
   sc.rankSource = sc.rankSource === 'GLOBAL' ? 'GLOBAL' : 'TABLE';
+  sc.rankBasis = sc.rankBasis === 'HAND' ? 'HAND' : 'ROUND';
   if (!sc.rankTable || typeof sc.rankTable !== 'object') sc.rankTable = { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] };
   ['4', '3', '2'].forEach(function(k){
     var arr = sc.rankTable[k];
@@ -201,6 +214,23 @@ function normalizeStage(st){
   st.inherit = Object.assign({ mode: 'RESET', ratio: 1, includeRank: false }, st.inherit || {});
   st.inherit.mode = ['RESET', 'FULL', 'RATIO'].indexOf(st.inherit.mode) >= 0 ? st.inherit.mode : 'RESET';
   st.inherit.ratio = clamp(num(st.inherit.ratio) || 1, 0, 10);
+
+  /* 阶段积分（赛季积分来源） */
+  st.points = Object.assign({
+    on: false, mode: 'TABLE',
+    rankTable: [100, 80, 65, 50, 40, 30, 20, 10], beyond: 0,
+    linear: { max: 50, min: 10 },
+    special: { withdrawn: 10, dq: 0, unplayed: 0 },
+    stack: true
+  }, st.points || {});
+  st.points.mode = st.points.mode === 'LINEAR' ? 'LINEAR' : 'TABLE';
+  if (!Array.isArray(st.points.rankTable) || !st.points.rankTable.length){
+    st.points.rankTable = [100, 80, 65, 50, 40, 30, 20, 10];
+  } else st.points.rankTable = st.points.rankTable.map(function(x){ return num(x); });
+  st.points.beyond = num(st.points.beyond) || 0;
+  st.points.linear = Object.assign({ max: 50, min: 10 }, st.points.linear || {});
+  st.points.special = Object.assign({ withdrawn: 10, dq: 0, unplayed: 0 }, st.points.special || {});
+  st.points.stack = st.points.stack !== false;
 
   var tb = st.tiebreak = st.tiebreak || {};
   if (!Array.isArray(tb.chain) || !tb.chain.length){

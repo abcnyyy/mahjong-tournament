@@ -568,6 +568,7 @@ function newStage(format, name){
     scoring: {
       mode: 'RANK_POINT',                // RANK_POINT 排名分 | PURE 纯分数+修正
       rankSource: 'TABLE',               // TABLE 桌内 | GLOBAL 全场
+      rankBasis: 'ROUND',                // ROUND 名次分按每轮 | HAND 名次分按每局
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
       tieSplit: true,                    // 并列顺位平分名次分
       topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 同桌并列 top 加分
@@ -578,6 +579,16 @@ function newStage(format, name){
     },
     /* 继承 */
     inherit: { mode: 'RESET', ratio: 1, includeRank: false },  // RESET | FULL | RATIO
+    /* 阶段积分（赛季积分按阶段计算） */
+    points: {
+      on: false,
+      mode: 'TABLE',                    // TABLE 名次表 | LINEAR 线性公式
+      rankTable: [100, 80, 65, 50, 40, 30, 20, 10],
+      beyond: 0,
+      linear: { max: 50, min: 10 },
+      special: { withdrawn: 10, dq: 0, unplayed: 0 },
+      stack: true                       // true 与上一阶段叠加为总积分 | false 本阶段单独计算
+    },
     /* 破同分 */
     tiebreak: { chain: ['RAW', 'AVG_RANK', 'FIRST', 'SECOND', 'LAST', 'H2H', 'SEED'] },
     /* 晋级 */
@@ -607,12 +618,13 @@ function newTable(seats){
 
 /* ---------- 规范 / 迁移 ---------- */
 function newDB(){
-  return { version: 2, seenWelcome: false, activeSeasonId: '', seasons: [], tournaments: [], settings: { orgName: '' } };
+  return { version: 2, seenWelcome: false, activeSeasonId: '', seasons: [], tournaments: [], pointTemplates: [], settings: { orgName: '' } };
 }
 function normalizeDB(d){
   if (!d || typeof d !== 'object') return newDB();
   if (!Array.isArray(d.seasons)) d.seasons = [];
   if (!Array.isArray(d.tournaments)) d.tournaments = [];
+  if (!Array.isArray(d.pointTemplates)) d.pointTemplates = [];
   if (!d.settings || typeof d.settings !== 'object') d.settings = { orgName: '' };
   d.version = 2;
   d.seenWelcome = !!d.seenWelcome;
@@ -684,6 +696,7 @@ function normalizeStage(st){
   var sc = st.scoring = st.scoring || {};
   sc.mode = sc.mode === 'PURE' ? 'PURE' : 'RANK_POINT';
   sc.rankSource = sc.rankSource === 'GLOBAL' ? 'GLOBAL' : 'TABLE';
+  sc.rankBasis = sc.rankBasis === 'HAND' ? 'HAND' : 'ROUND';
   if (!sc.rankTable || typeof sc.rankTable !== 'object') sc.rankTable = { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] };
   ['4', '3', '2'].forEach(function(k){
     var arr = sc.rankTable[k];
@@ -701,6 +714,23 @@ function normalizeStage(st){
   st.inherit = Object.assign({ mode: 'RESET', ratio: 1, includeRank: false }, st.inherit || {});
   st.inherit.mode = ['RESET', 'FULL', 'RATIO'].indexOf(st.inherit.mode) >= 0 ? st.inherit.mode : 'RESET';
   st.inherit.ratio = clamp(num(st.inherit.ratio) || 1, 0, 10);
+
+  /* 阶段积分（赛季积分来源） */
+  st.points = Object.assign({
+    on: false, mode: 'TABLE',
+    rankTable: [100, 80, 65, 50, 40, 30, 20, 10], beyond: 0,
+    linear: { max: 50, min: 10 },
+    special: { withdrawn: 10, dq: 0, unplayed: 0 },
+    stack: true
+  }, st.points || {});
+  st.points.mode = st.points.mode === 'LINEAR' ? 'LINEAR' : 'TABLE';
+  if (!Array.isArray(st.points.rankTable) || !st.points.rankTable.length){
+    st.points.rankTable = [100, 80, 65, 50, 40, 30, 20, 10];
+  } else st.points.rankTable = st.points.rankTable.map(function(x){ return num(x); });
+  st.points.beyond = num(st.points.beyond) || 0;
+  st.points.linear = Object.assign({ max: 50, min: 10 }, st.points.linear || {});
+  st.points.special = Object.assign({ withdrawn: 10, dq: 0, unplayed: 0 }, st.points.special || {});
+  st.points.stack = st.points.stack !== false;
 
   var tb = st.tiebreak = st.tiebreak || {};
   if (!Array.isArray(tb.chain) || !tb.chain.length){
@@ -1267,13 +1297,22 @@ function calcRound(st, r){
     var totals = roundTableTotals(tb, halves);
     var table = tableOfSize(cfg, totals.length);
     var pts = rankPointsWithTie(totals, table, cfg.tieSplit);
+    /* 名次分粒度：每轮（按本轮总分排名）或每局（每个半庄各自排名后累加） */
+    var handPts = {};
+    if (cfg.rankBasis === 'HAND' && halves > 1){
+      for (var hh = 0; hh < halves; hh++){
+        var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]) }; });
+        var hp = rankPointsWithTie(hTotals, table, cfg.tieSplit);
+        Object.keys(hp).forEach(function(pid){ handPts[pid] = (handPts[pid] || 0) + hp[pid]; });
+      }
+    }
     var ranks = tableRanks(totals);
     var maxTotal = -Infinity, maxCnt = 0;
     totals.forEach(function(x){ if (x.total > maxTotal){ maxTotal = x.total; maxCnt = 1; } else if (x.total === maxTotal) maxCnt++; });
     var rows = tb.seats.map(function(s){
       var tot = totals.filter(function(x){ return x.pid === s.pid; })[0] || { total: 0, raw: 0 };
       var rank = s.manualRank ? num(s.manualRank) : (ranks[s.pid] || totals.length);
-      var rankPoint = num(pts[s.pid]);
+      var rankPoint = cfg.rankBasis === 'HAND' ? (handPts[s.pid] || 0) : num(pts[s.pid]);
       /* 水上/水下修正 */
       var water = 0;
       if (cfg.water && cfg.water.on){
@@ -1860,43 +1899,89 @@ function tournamentFinal(t){
   if (st.format === 'POINTS') return stageRanking(t, st).map(function(r){ return r.pid; });
   return elimFinalRanking(t, st);
 }
-/* 名次分 */
-function pointsByRank(season, rank, total){
-  var rules = season.rules;
-  if (rules.mode === 'LINEAR'){
-    var max = num(rules.linear.max), min = num(rules.linear.min);
+/* 名次分：season 旧规则（兼容）/ stage 规则共用 */
+function pointsByRule(rule, rank, total){
+  if (rule.mode === 'LINEAR'){
+    var max = num(rule.linear.max), min = num(rule.linear.min);
     if (total <= 1) return max;
     var p = max - (max - min) * (rank - 1) / (total - 1);
     return Math.round(p * 100) / 100;
   }
-  var table = rules.rankTable || [];
+  var table = rule.rankTable || [];
   if (rank <= table.length) return num(table[rank - 1]);
-  return num(rules.beyond) || 0;
+  return num(rule.beyond) || 0;
 }
-/* 单场赛事的积分表：{pid: 分, 说明} */
-function computeTournamentPoints(t){
-  var season = getSeason(t.seasonId) || defaultPointSeason();
-  var final = tournamentFinal(t);
+function pointsByRank(season, rank, total){
+  return pointsByRule(season.rules, rank, total);
+}
+/* 某阶段的积分：{pid:{points, rank, note}}，未上榜者按退赛/DQ/未出场给分 */
+function stagePointsMap(t, st){
   var out = {};
-  final.forEach(function(pid, i){
+  var rule = st.points || {};
+  var order = st.format === 'POINTS'
+    ? stageRanking(t, st).map(function(r){ return r.pid; })
+    : elimFinalRanking(t, st);
+  order.forEach(function(pid, i){
     var p = getPlayer(t, pid);
-    if (!p) return;
-    if (p.disqualified){ out[pid] = { points: num(season.rules.special.dq), note: '取消资格' }; return; }
-    out[pid] = { points: pointsByRank(season, i + 1, final.length), note: '第 ' + (i + 1) + ' 名' };
+    if (!p || p.disqualified) return;
+    out[pid] = { points: pointsByRule(rule, i + 1, order.length), rank: i + 1, note: '第 ' + (i + 1) + ' 名' };
   });
-  /* 退赛 / 缺赛特例 */
-  t.players.forEach(function(p){
+  stagePlayers(t, st).forEach(function(p){
     if (out[p.id]) return;
-    if (p.disqualified){ out[p.id] = { points: num(season.rules.special.dq), note: '取消资格' }; return; }
-    if (p.withdrawn){ out[p.id] = { points: num(season.rules.special.withdrawn), note: '退赛' }; return; }
-    out[p.id] = { points: num(season.rules.special.unplayed), note: '未参赛/未上榜' };
+    if (p.disqualified){ out[p.id] = { points: num(rule.special && rule.special.dq), rank: 0, note: '取消资格' }; return; }
+    if (p.withdrawn){ out[p.id] = { points: num(rule.special && rule.special.withdrawn), rank: 0, note: '退赛' }; return; }
+    out[p.id] = { points: num(rule.special && rule.special.unplayed), rank: 0, note: '未出场' };
   });
+  return out;
+}
+/* 单场赛事的积分表：{pid: {points, note, stages}} */
+function computeTournamentPoints(t){
+  var out = {};
+  var hasStageRules = t.stages.some(function(st){ return st.points && st.points.on; });
+  if (hasStageRules){
+    t.stages.forEach(function(st){
+      if (!st.points || !st.points.on) return;
+      var map = stagePointsMap(t, st);
+      Object.keys(map).forEach(function(pid){
+        var rec = out[pid] || (out[pid] = { points: 0, note: '', stages: {}, override: false });
+        rec.stages[st.id] = map[pid].points;
+        if (st.points.stack) rec.points += map[pid].points;
+      });
+    });
+    /* 说明文案 */
+    Object.keys(out).forEach(function(pid){
+      var rec = out[pid];
+      var parts = [];
+      t.stages.forEach(function(st){
+        if (st.points && st.points.on && rec.stages[st.id] != null){
+          parts.push(st.name + ' ' + fmt(rec.stages[st.id]));
+        }
+      });
+      rec.note = parts.join(' + ');
+    });
+  } else {
+    /* 兼容：没有阶段积分规则时，按赛季规则 + 最终名次计算 */
+    var season = getSeason(t.seasonId) || defaultPointSeason();
+    var final = tournamentFinal(t);
+    final.forEach(function(pid, i){
+      var p = getPlayer(t, pid);
+      if (!p) return;
+      if (p.disqualified){ out[pid] = { points: num(season.rules.special.dq), note: '取消资格', stages: {} }; return; }
+      out[pid] = { points: pointsByRank(season, i + 1, final.length), note: '第 ' + (i + 1) + ' 名', stages: {} };
+    });
+    t.players.forEach(function(p){
+      if (out[p.id]) return;
+      if (p.disqualified){ out[p.id] = { points: num(season.rules.special.dq), note: '取消资格', stages: {} }; return; }
+      if (p.withdrawn){ out[p.id] = { points: num(season.rules.special.withdrawn), note: '退赛', stages: {} }; return; }
+      out[p.id] = { points: num(season.rules.special.unplayed), note: '未参赛/未上榜', stages: {} };
+    });
+  }
   /* 手动覆盖 */
   var ov = t.result.points || {};
   Object.keys(ov).forEach(function(pid){
-    if (!out[pid]) out[pid] = { points: 0, note: '手动' };
+    if (!out[pid]) out[pid] = { points: 0, note: '', stages: {} };
     out[pid].points = num(ov[pid]);
-    out[pid].note = '手动覆盖';
+    out[pid].note = '手动覆盖' + (out[pid].note ? '（原：' + out[pid].note + '）' : '');
     out[pid].override = true;
   });
   return out;
@@ -2582,6 +2667,9 @@ function stageConfigView(t, st){
        + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
     h += '<div class="field"><label>名次分表 · 3 人桌</label>'
        + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
+    h += '<div class="field"><label>名次分粒度</label>'
+       + segHtml('rb', [['ROUND', '每轮（按本轮总分排名）'], ['HAND', '每局（每个半庄分别排名）']], st.scoring.rankBasis || 'ROUND', 'stSetRankBasis')
+       + '</div><div class="tiny" style="margin:-6px 0 8px">「每局」= 每个半庄按顺位各给一次名次分，累加；「每轮」= 几个半庄总分排名后只给一次。</div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
     if (st.scoring.mode === 'PURE'){
       if ((st.scoring.entryMode || 'RAW') === 'RAW'){
@@ -2643,6 +2731,32 @@ function stageConfigView(t, st){
   if (st.format !== 'POINTS'){
     h += '<div class="tiny">淘汰赛轮间继承请在「淘汰赛」区块单独设置。</div>';
   }
+
+  h += '<div class="hr"></div><h3 style="margin-bottom:10px">阶段积分（赛季积分用）</h3>';
+  h += '<label class="check"><input type="checkbox" ' + (st.points.on ? 'checked' : '') + ' onchange="stSetPointsOn(this.checked)">本阶段计入赛季积分</label>';
+  if (st.points.on){
+    h += '<div class="field"><label>积分方式</label>' + segHtml('pm', [['TABLE', '名次分表'], ['LINEAR', '线性公式']], st.points.mode, 'stSetPointsMode') + '</div>';
+    if (st.points.mode === 'TABLE'){
+      h += '<div class="field"><label>名次分表（第 1 名开始，逗号分隔；超出取「其余名次得分」）</label>'
+         + '<input class="input" value="' + st.points.rankTable.join(',') + '" onchange="stSetPointsRankTable(this.value)"></div>';
+      h += '<div class="field"><label>其余名次得分</label><input class="input" type="number" value="' + st.points.beyond + '" onchange="stSetPointsNum(\'beyond\',this.value)"></div>';
+    } else {
+      h += '<div class="field-row">'
+         + '<div class="field"><label>第 1 名得分</label><input class="input" type="number" value="' + st.points.linear.max + '" onchange="stSetPointsLinear(\'max\',this.value)"></div>'
+         + '<div class="field"><label>末名得分</label><input class="input" type="number" value="' + st.points.linear.min + '" onchange="stSetPointsLinear(\'min\',this.value)"></div>'
+         + '</div>';
+    }
+    h += '<label class="check"><input type="checkbox" ' + (st.points.stack ? 'checked' : '') + ' onchange="stSetPointsStack(this.checked)">与之前阶段叠加为总积分</label>';
+    h += '<div class="tiny" style="margin:-4px 0 8px">关闭时：本阶段积分单独计算，不计入赛事总积分（只用于本阶段排名/晋级）。</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>退赛得分</label><input class="input" type="number" value="' + st.points.special.withdrawn + '" onchange="stSetPointsSpecial(\'withdrawn\',this.value)"></div>'
+       + '<div class="field"><label>DQ 得分</label><input class="input" type="number" value="' + st.points.special.dq + '" onchange="stSetPointsSpecial(\'dq\',this.value)"></div>'
+       + '</div>';
+    h += '<div class="field"><label>未出场得分</label><input class="input" type="number" value="' + st.points.special.unplayed + '" onchange="stSetPointsSpecial(\'unplayed\',this.value)"></div>';
+    h += '<div class="btnrow"><button class="btn sm ghost" onclick="savePointsTemplate()">保存为模板</button>'
+       + '<button class="btn sm ghost" onclick="loadPointsTemplate()">从模板载入</button></div>';
+  }
+  h += '<div class="tiny" style="margin-top:8px">赛季积分 = 本赛事各阶段积分之和（只算勾了「叠加」的阶段）；赛事结果页可逐人手动覆盖。</div>';
 
   h += '<div class="hr"></div><h3 style="margin-bottom:10px">晋级下一阶段</h3>';
   h += '<div class="field"><label>晋级规则</label>'
@@ -2712,6 +2826,57 @@ function stToggleChain(k){
 function stSetScoring(key, v){ var st = curStage(); st.scoring[key] = v; save(); render(); }
 function stSetEntryMode(v){ var st = curStage(); st.scoring.entryMode = v; save(); render(); }
 function stSetScoringNum(key, v){ var st = curStage(); st.scoring[key] = num(v); save(); render(); }
+function stSetRankBasis(v){ var st = curStage(); st.scoring.rankBasis = v; save(); render(); }
+
+/* ---------- 阶段积分 ---------- */
+function stSetPointsOn(on){ var st = curStage(); st.points.on = !!on; save(); render(); }
+function stSetPointsMode(v){ var st = curStage(); st.points.mode = v; save(); render(); }
+function stSetPointsRankTable(v){
+  var st = curStage();
+  var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
+  if (!arr.length) return;
+  st.points.rankTable = arr; save(); render();
+}
+function stSetPointsNum(k, v){ var st = curStage(); st.points[k] = num(v); save(); render(); }
+function stSetPointsLinear(k, v){ var st = curStage(); st.points.linear[k] = num(v); save(); render(); }
+function stSetPointsStack(on){ var st = curStage(); st.points.stack = !!on; save(); render(); }
+function stSetPointsSpecial(k, v){ var st = curStage(); st.points.special[k] = num(v); save(); render(); }
+function savePointsTemplate(){
+  var st = curStage();
+  if (!st.points.on){ toast('先开启「本阶段计入赛季积分」', 'err'); return; }
+  promptBox('模板名称', '积分模板 ' + (DB.pointTemplates.length + 1), function(name){
+    if (!name.trim()) return;
+    DB.pointTemplates.push({ id: uid('pt'), name: name.trim(), rule: deepClone(st.points) });
+    save(); closeModal(); toast('模板已保存', 'ok'); render();
+  });
+}
+function loadPointsTemplate(){
+  if (!DB.pointTemplates.length){ toast('还没有保存过模板'); return; }
+  var h = '<div class="modal-title">载入积分模板</div><div class="list">';
+  DB.pointTemplates.forEach(function(tpl){
+    h += '<div class="rowline"><span class="label">' + esc(tpl.name)
+       + ' <span class="tag gray">' + (tpl.rule.mode === 'LINEAR' ? '线性' : '名次表') + '</span></span>'
+       + '<span><button class="btn xs primary" onclick="applyPointsTemplate(\'' + tpl.id + '\')">载入</button> '
+       + '<button class="btn xs ghost" onclick="deletePointsTemplate(\'' + tpl.id + '\')">删除</button></span></div>';
+  });
+  h += '</div><div class="modal-actions"><button class="btn primary" onclick="closeModal()">关闭</button></div>';
+  openModal(h);
+}
+function applyPointsTemplate(id){
+  var st = curStage();
+  var tpl = DB.pointTemplates.filter(function(x){ return x.id === id; })[0];
+  if (!tpl) return;
+  var rule = deepClone(tpl.rule);
+  rule.on = true;
+  st.points = rule;
+  save(); closeModal(); toast('已载入模板：' + tpl.name, 'ok'); render();
+}
+function deletePointsTemplate(id){
+  confirmBox('删除这个积分模板？', function(){
+    DB.pointTemplates = DB.pointTemplates.filter(function(x){ return x.id !== id; });
+    save(); closeModal(); toast('已删除', 'ok');
+  }, { danger: true, yesText: '删除' });
+}
 function stSetScoringMode(v){ var st = curStage(); st.scoring.mode = v; save(); render(); }
 function stSetRankSource(v){ var st = curStage(); st.scoring.rankSource = v; save(); render(); }
 function stSetTable(key, arr){ var st = curStage(); st.scoring.rankTable[String(key)] = arr; save(); render(); }
@@ -3431,6 +3596,25 @@ function stageAdvanceView(t, st){
          + '<td class="num">' + fmt(rowMap[pid] ? rowMap[pid].point : 0) + '</td></tr>';
     });
     h += '</tbody></table></div></div>';
+  }
+
+  /* 本阶段积分 */
+  if (st.points && st.points.on){
+    var pm = stagePointsMap(t, st);
+    var order2 = st.format === 'POINTS' ? stageRanking(t, st).map(function(r){ return r.pid; }) : elimFinalRanking(t, st);
+    if (order2.length){
+      h += '<div class="card"><div class="card-h"><h3>本阶段积分</h3>'
+         + tagHtml(st.points.mode === 'LINEAR' ? '线性公式' : '名次分表', 'gray')
+         + tagHtml(st.points.stack ? '计入总分' : '单独计算', st.points.stack ? 'brand' : 'warn') + '</div>';
+      h += '<div class="scroll"><table class="grid"><thead><tr><th>名次</th><th class="l">选手</th><th>本阶段积分</th></tr></thead><tbody>';
+      order2.forEach(function(pid){
+        var p = getPlayer(t, pid);
+        if (!p || !pm[pid]) return;
+        h += '<tr><td class="rk">' + (pm[pid].rank || '—') + '</td><td class="nm">' + esc(p.name) + '</td>'
+           + '<td class="num">' + fmt(pm[pid].points) + '</td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+    }
   }
 
   /* 赛事结果与积分 */

@@ -68,13 +68,22 @@ function calcRound(st, r){
     var totals = roundTableTotals(tb, halves);
     var table = tableOfSize(cfg, totals.length);
     var pts = rankPointsWithTie(totals, table, cfg.tieSplit);
+    /* 名次分粒度：每轮（按本轮总分排名）或每局（每个半庄各自排名后累加） */
+    var handPts = {};
+    if (cfg.rankBasis === 'HAND' && halves > 1){
+      for (var hh = 0; hh < halves; hh++){
+        var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]) }; });
+        var hp = rankPointsWithTie(hTotals, table, cfg.tieSplit);
+        Object.keys(hp).forEach(function(pid){ handPts[pid] = (handPts[pid] || 0) + hp[pid]; });
+      }
+    }
     var ranks = tableRanks(totals);
     var maxTotal = -Infinity, maxCnt = 0;
     totals.forEach(function(x){ if (x.total > maxTotal){ maxTotal = x.total; maxCnt = 1; } else if (x.total === maxTotal) maxCnt++; });
     var rows = tb.seats.map(function(s){
       var tot = totals.filter(function(x){ return x.pid === s.pid; })[0] || { total: 0, raw: 0 };
       var rank = s.manualRank ? num(s.manualRank) : (ranks[s.pid] || totals.length);
-      var rankPoint = num(pts[s.pid]);
+      var rankPoint = cfg.rankBasis === 'HAND' ? (handPts[s.pid] || 0) : num(pts[s.pid]);
       /* 水上/水下修正 */
       var water = 0;
       if (cfg.water && cfg.water.on){

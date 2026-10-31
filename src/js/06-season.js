@@ -24,43 +24,89 @@ function tournamentFinal(t){
   if (st.format === 'POINTS') return stageRanking(t, st).map(function(r){ return r.pid; });
   return elimFinalRanking(t, st);
 }
-/* 名次分 */
-function pointsByRank(season, rank, total){
-  var rules = season.rules;
-  if (rules.mode === 'LINEAR'){
-    var max = num(rules.linear.max), min = num(rules.linear.min);
+/* 名次分：season 旧规则（兼容）/ stage 规则共用 */
+function pointsByRule(rule, rank, total){
+  if (rule.mode === 'LINEAR'){
+    var max = num(rule.linear.max), min = num(rule.linear.min);
     if (total <= 1) return max;
     var p = max - (max - min) * (rank - 1) / (total - 1);
     return Math.round(p * 100) / 100;
   }
-  var table = rules.rankTable || [];
+  var table = rule.rankTable || [];
   if (rank <= table.length) return num(table[rank - 1]);
-  return num(rules.beyond) || 0;
+  return num(rule.beyond) || 0;
 }
-/* 单场赛事的积分表：{pid: 分, 说明} */
-function computeTournamentPoints(t){
-  var season = getSeason(t.seasonId) || defaultPointSeason();
-  var final = tournamentFinal(t);
+function pointsByRank(season, rank, total){
+  return pointsByRule(season.rules, rank, total);
+}
+/* 某阶段的积分：{pid:{points, rank, note}}，未上榜者按退赛/DQ/未出场给分 */
+function stagePointsMap(t, st){
   var out = {};
-  final.forEach(function(pid, i){
+  var rule = st.points || {};
+  var order = st.format === 'POINTS'
+    ? stageRanking(t, st).map(function(r){ return r.pid; })
+    : elimFinalRanking(t, st);
+  order.forEach(function(pid, i){
     var p = getPlayer(t, pid);
-    if (!p) return;
-    if (p.disqualified){ out[pid] = { points: num(season.rules.special.dq), note: '取消资格' }; return; }
-    out[pid] = { points: pointsByRank(season, i + 1, final.length), note: '第 ' + (i + 1) + ' 名' };
+    if (!p || p.disqualified) return;
+    out[pid] = { points: pointsByRule(rule, i + 1, order.length), rank: i + 1, note: '第 ' + (i + 1) + ' 名' };
   });
-  /* 退赛 / 缺赛特例 */
-  t.players.forEach(function(p){
+  stagePlayers(t, st).forEach(function(p){
     if (out[p.id]) return;
-    if (p.disqualified){ out[p.id] = { points: num(season.rules.special.dq), note: '取消资格' }; return; }
-    if (p.withdrawn){ out[p.id] = { points: num(season.rules.special.withdrawn), note: '退赛' }; return; }
-    out[p.id] = { points: num(season.rules.special.unplayed), note: '未参赛/未上榜' };
+    if (p.disqualified){ out[p.id] = { points: num(rule.special && rule.special.dq), rank: 0, note: '取消资格' }; return; }
+    if (p.withdrawn){ out[p.id] = { points: num(rule.special && rule.special.withdrawn), rank: 0, note: '退赛' }; return; }
+    out[p.id] = { points: num(rule.special && rule.special.unplayed), rank: 0, note: '未出场' };
   });
+  return out;
+}
+/* 单场赛事的积分表：{pid: {points, note, stages}} */
+function computeTournamentPoints(t){
+  var out = {};
+  var hasStageRules = t.stages.some(function(st){ return st.points && st.points.on; });
+  if (hasStageRules){
+    t.stages.forEach(function(st){
+      if (!st.points || !st.points.on) return;
+      var map = stagePointsMap(t, st);
+      Object.keys(map).forEach(function(pid){
+        var rec = out[pid] || (out[pid] = { points: 0, note: '', stages: {}, override: false });
+        rec.stages[st.id] = map[pid].points;
+        if (st.points.stack) rec.points += map[pid].points;
+      });
+    });
+    /* 说明文案 */
+    Object.keys(out).forEach(function(pid){
+      var rec = out[pid];
+      var parts = [];
+      t.stages.forEach(function(st){
+        if (st.points && st.points.on && rec.stages[st.id] != null){
+          parts.push(st.name + ' ' + fmt(rec.stages[st.id]));
+        }
+      });
+      rec.note = parts.join(' + ');
+    });
+  } else {
+    /* 兼容：没有阶段积分规则时，按赛季规则 + 最终名次计算 */
+    var season = getSeason(t.seasonId) || defaultPointSeason();
+    var final = tournamentFinal(t);
+    final.forEach(function(pid, i){
+      var p = getPlayer(t, pid);
+      if (!p) return;
+      if (p.disqualified){ out[pid] = { points: num(season.rules.special.dq), note: '取消资格', stages: {} }; return; }
+      out[pid] = { points: pointsByRank(season, i + 1, final.length), note: '第 ' + (i + 1) + ' 名', stages: {} };
+    });
+    t.players.forEach(function(p){
+      if (out[p.id]) return;
+      if (p.disqualified){ out[p.id] = { points: num(season.rules.special.dq), note: '取消资格', stages: {} }; return; }
+      if (p.withdrawn){ out[p.id] = { points: num(season.rules.special.withdrawn), note: '退赛', stages: {} }; return; }
+      out[p.id] = { points: num(season.rules.special.unplayed), note: '未参赛/未上榜', stages: {} };
+    });
+  }
   /* 手动覆盖 */
   var ov = t.result.points || {};
   Object.keys(ov).forEach(function(pid){
-    if (!out[pid]) out[pid] = { points: 0, note: '手动' };
+    if (!out[pid]) out[pid] = { points: 0, note: '', stages: {} };
     out[pid].points = num(ov[pid]);
-    out[pid].note = '手动覆盖';
+    out[pid].note = '手动覆盖' + (out[pid].note ? '（原：' + out[pid].note + '）' : '');
     out[pid].override = true;
   });
   return out;

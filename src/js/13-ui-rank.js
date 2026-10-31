@@ -189,6 +189,25 @@ function stageAdvanceView(t, st){
     h += '</tbody></table></div></div>';
   }
 
+  /* 本阶段积分 */
+  if (st.points && st.points.on){
+    var pm = stagePointsMap(t, st);
+    var order2 = st.format === 'POINTS' ? stageRanking(t, st).map(function(r){ return r.pid; }) : elimFinalRanking(t, st);
+    if (order2.length){
+      h += '<div class="card"><div class="card-h"><h3>本阶段积分</h3>'
+         + tagHtml(st.points.mode === 'LINEAR' ? '线性公式' : '名次分表', 'gray')
+         + tagHtml(st.points.stack ? '计入总分' : '单独计算', st.points.stack ? 'brand' : 'warn') + '</div>';
+      h += '<div class="scroll"><table class="grid"><thead><tr><th>名次</th><th class="l">选手</th><th>本阶段积分</th></tr></thead><tbody>';
+      order2.forEach(function(pid){
+        var p = getPlayer(t, pid);
+        if (!p || !pm[pid]) return;
+        h += '<tr><td class="rk">' + (pm[pid].rank || '—') + '</td><td class="nm">' + esc(p.name) + '</td>'
+           + '<td class="num">' + fmt(pm[pid].points) + '</td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+    }
+  }
+
   /* 赛事结果与积分 */
   var tf = tournamentFinal(t);
   if (tf.length){

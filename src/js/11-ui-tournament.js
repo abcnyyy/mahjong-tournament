@@ -335,6 +335,9 @@ function stageConfigView(t, st){
        + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
     h += '<div class="field"><label>名次分表 · 3 人桌</label>'
        + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
+    h += '<div class="field"><label>名次分粒度</label>'
+       + segHtml('rb', [['ROUND', '每轮（按本轮总分排名）'], ['HAND', '每局（每个半庄分别排名）']], st.scoring.rankBasis || 'ROUND', 'stSetRankBasis')
+       + '</div><div class="tiny" style="margin:-6px 0 8px">「每局」= 每个半庄按顺位各给一次名次分，累加；「每轮」= 几个半庄总分排名后只给一次。</div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
     if (st.scoring.mode === 'PURE'){
       if ((st.scoring.entryMode || 'RAW') === 'RAW'){
@@ -396,6 +399,32 @@ function stageConfigView(t, st){
   if (st.format !== 'POINTS'){
     h += '<div class="tiny">淘汰赛轮间继承请在「淘汰赛」区块单独设置。</div>';
   }
+
+  h += '<div class="hr"></div><h3 style="margin-bottom:10px">阶段积分（赛季积分用）</h3>';
+  h += '<label class="check"><input type="checkbox" ' + (st.points.on ? 'checked' : '') + ' onchange="stSetPointsOn(this.checked)">本阶段计入赛季积分</label>';
+  if (st.points.on){
+    h += '<div class="field"><label>积分方式</label>' + segHtml('pm', [['TABLE', '名次分表'], ['LINEAR', '线性公式']], st.points.mode, 'stSetPointsMode') + '</div>';
+    if (st.points.mode === 'TABLE'){
+      h += '<div class="field"><label>名次分表（第 1 名开始，逗号分隔；超出取「其余名次得分」）</label>'
+         + '<input class="input" value="' + st.points.rankTable.join(',') + '" onchange="stSetPointsRankTable(this.value)"></div>';
+      h += '<div class="field"><label>其余名次得分</label><input class="input" type="number" value="' + st.points.beyond + '" onchange="stSetPointsNum(\'beyond\',this.value)"></div>';
+    } else {
+      h += '<div class="field-row">'
+         + '<div class="field"><label>第 1 名得分</label><input class="input" type="number" value="' + st.points.linear.max + '" onchange="stSetPointsLinear(\'max\',this.value)"></div>'
+         + '<div class="field"><label>末名得分</label><input class="input" type="number" value="' + st.points.linear.min + '" onchange="stSetPointsLinear(\'min\',this.value)"></div>'
+         + '</div>';
+    }
+    h += '<label class="check"><input type="checkbox" ' + (st.points.stack ? 'checked' : '') + ' onchange="stSetPointsStack(this.checked)">与之前阶段叠加为总积分</label>';
+    h += '<div class="tiny" style="margin:-4px 0 8px">关闭时：本阶段积分单独计算，不计入赛事总积分（只用于本阶段排名/晋级）。</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>退赛得分</label><input class="input" type="number" value="' + st.points.special.withdrawn + '" onchange="stSetPointsSpecial(\'withdrawn\',this.value)"></div>'
+       + '<div class="field"><label>DQ 得分</label><input class="input" type="number" value="' + st.points.special.dq + '" onchange="stSetPointsSpecial(\'dq\',this.value)"></div>'
+       + '</div>';
+    h += '<div class="field"><label>未出场得分</label><input class="input" type="number" value="' + st.points.special.unplayed + '" onchange="stSetPointsSpecial(\'unplayed\',this.value)"></div>';
+    h += '<div class="btnrow"><button class="btn sm ghost" onclick="savePointsTemplate()">保存为模板</button>'
+       + '<button class="btn sm ghost" onclick="loadPointsTemplate()">从模板载入</button></div>';
+  }
+  h += '<div class="tiny" style="margin-top:8px">赛季积分 = 本赛事各阶段积分之和（只算勾了「叠加」的阶段）；赛事结果页可逐人手动覆盖。</div>';
 
   h += '<div class="hr"></div><h3 style="margin-bottom:10px">晋级下一阶段</h3>';
   h += '<div class="field"><label>晋级规则</label>'
@@ -465,6 +494,57 @@ function stToggleChain(k){
 function stSetScoring(key, v){ var st = curStage(); st.scoring[key] = v; save(); render(); }
 function stSetEntryMode(v){ var st = curStage(); st.scoring.entryMode = v; save(); render(); }
 function stSetScoringNum(key, v){ var st = curStage(); st.scoring[key] = num(v); save(); render(); }
+function stSetRankBasis(v){ var st = curStage(); st.scoring.rankBasis = v; save(); render(); }
+
+/* ---------- 阶段积分 ---------- */
+function stSetPointsOn(on){ var st = curStage(); st.points.on = !!on; save(); render(); }
+function stSetPointsMode(v){ var st = curStage(); st.points.mode = v; save(); render(); }
+function stSetPointsRankTable(v){
+  var st = curStage();
+  var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
+  if (!arr.length) return;
+  st.points.rankTable = arr; save(); render();
+}
+function stSetPointsNum(k, v){ var st = curStage(); st.points[k] = num(v); save(); render(); }
+function stSetPointsLinear(k, v){ var st = curStage(); st.points.linear[k] = num(v); save(); render(); }
+function stSetPointsStack(on){ var st = curStage(); st.points.stack = !!on; save(); render(); }
+function stSetPointsSpecial(k, v){ var st = curStage(); st.points.special[k] = num(v); save(); render(); }
+function savePointsTemplate(){
+  var st = curStage();
+  if (!st.points.on){ toast('先开启「本阶段计入赛季积分」', 'err'); return; }
+  promptBox('模板名称', '积分模板 ' + (DB.pointTemplates.length + 1), function(name){
+    if (!name.trim()) return;
+    DB.pointTemplates.push({ id: uid('pt'), name: name.trim(), rule: deepClone(st.points) });
+    save(); closeModal(); toast('模板已保存', 'ok'); render();
+  });
+}
+function loadPointsTemplate(){
+  if (!DB.pointTemplates.length){ toast('还没有保存过模板'); return; }
+  var h = '<div class="modal-title">载入积分模板</div><div class="list">';
+  DB.pointTemplates.forEach(function(tpl){
+    h += '<div class="rowline"><span class="label">' + esc(tpl.name)
+       + ' <span class="tag gray">' + (tpl.rule.mode === 'LINEAR' ? '线性' : '名次表') + '</span></span>'
+       + '<span><button class="btn xs primary" onclick="applyPointsTemplate(\'' + tpl.id + '\')">载入</button> '
+       + '<button class="btn xs ghost" onclick="deletePointsTemplate(\'' + tpl.id + '\')">删除</button></span></div>';
+  });
+  h += '</div><div class="modal-actions"><button class="btn primary" onclick="closeModal()">关闭</button></div>';
+  openModal(h);
+}
+function applyPointsTemplate(id){
+  var st = curStage();
+  var tpl = DB.pointTemplates.filter(function(x){ return x.id === id; })[0];
+  if (!tpl) return;
+  var rule = deepClone(tpl.rule);
+  rule.on = true;
+  st.points = rule;
+  save(); closeModal(); toast('已载入模板：' + tpl.name, 'ok'); render();
+}
+function deletePointsTemplate(id){
+  confirmBox('删除这个积分模板？', function(){
+    DB.pointTemplates = DB.pointTemplates.filter(function(x){ return x.id !== id; });
+    save(); closeModal(); toast('已删除', 'ok');
+  }, { danger: true, yesText: '删除' });
+}
 function stSetScoringMode(v){ var st = curStage(); st.scoring.mode = v; save(); render(); }
 function stSetRankSource(v){ var st = curStage(); st.scoring.rankSource = v; save(); render(); }
 function stSetTable(key, arr){ var st = curStage(); st.scoring.rankTable[String(key)] = arr; save(); render(); }

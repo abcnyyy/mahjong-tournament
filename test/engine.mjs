@@ -279,6 +279,63 @@ const testSrc = String.raw`
   out.adjSeat0Pid = r9.tables[0].seats[0].pid;
   out.adjTopRaw = rank9[0].raw;
 
+  /* ===== 场景13：名次分按每局 ===== */
+  var ta = newTournament('每局名次分', 'se1');
+  for (var z = 1; z <= 4; z++) ta.players.push(newPlayer('H' + z));
+  DB.tournaments.push(ta);
+  var sha = newStage('POINTS', '每局');
+  sha.halvesPerRound = 2; sha.roundCount = 1;
+  sha.scoring.mode = 'RANK_POINT';
+  sha.scoring.rankBasis = 'HAND';
+  sha.scoring.rankTable['4'] = [10, 5, 0, -5];
+  sha.entrants = ta.players.map(function(p){ return p.id; });
+  ta.stages.push(sha);
+  ensureEntrants(ta, sha);
+  var ra2 = startPointsRound(ta, sha);
+  var seats13 = ra2.tables[0].seats;
+  var s13 = [[400, 300], [300, 100], [200, 200], [100, 400]];
+  seats13.forEach(function(s, si){ s.scores[0] = s13[si][0]; s.scores[1] = s13[si][1]; });
+  ra2.status = 'confirmed';
+  var rows13 = stageRanking(ta, sha);
+  out.handPoints = seats13.map(function(s){
+    var r = rows13.filter(function(x){ return x.pid === s.pid; })[0];
+    return r ? r.point : null;
+  });
+
+  /* ===== 场景14：阶段积分叠加 / 单独计算 ===== */
+  var tb1 = newTournament('阶段积分', 'se1');
+  for (var y = 1; y <= 4; y++) tb1.players.push(newPlayer('J' + y));
+  DB.tournaments.push(tb1);
+  var s1 = newStage('POINTS', '第一阶段'); s1.halvesPerRound = 1; s1.roundCount = 1;
+  s1.points.on = true; s1.points.rankTable = [10, 5, 2, 1]; s1.points.stack = true;
+  s1.entrants = tb1.players.map(function(p){ return p.id; });
+  tb1.stages.push(s1);
+  ensureEntrants(tb1, s1);
+  var rr1 = startPointsRound(tb1, s1);
+  rr1.tables[0].seats.forEach(function(s){
+    var idx = tb1.players.map(function(p){ return p.id; }).indexOf(s.pid);
+    s.scores[0] = 400 - idx * 100;
+  });
+  rr1.status = 'confirmed';
+  var s2 = newStage('POINTS', '第二阶段'); s2.halvesPerRound = 1; s2.roundCount = 1;
+  s2.points.on = true; s2.points.rankTable = [10, 5, 2, 1]; s2.points.stack = true;
+  s2.entrants = tb1.players.map(function(p){ return p.id; });
+  tb1.stages.push(s2);
+  ensureEntrants(tb1, s2);
+  var rr2b = startPointsRound(tb1, s2);
+  rr2b.tables[0].seats.forEach(function(s){
+    var idx = tb1.players.map(function(p){ return p.id; }).indexOf(s.pid);
+    s.scores[0] = 400 - idx * 100;
+  });
+  rr2b.status = 'confirmed';
+  var ptsBoth = computeTournamentPoints(tb1);
+  var firstId = tb1.players[0].id;
+  out.stageSum = ptsBoth[firstId] ? ptsBoth[firstId].points : null;
+  out.stageNote = ptsBoth[firstId] ? ptsBoth[firstId].note : '';
+  s2.points.stack = false;
+  var ptsOne = computeTournamentPoints(tb1);
+  out.stageNoStack = ptsOne[firstId] ? ptsOne[firstId].points : null;
+
   return JSON.stringify(out);
 })()
 `;
@@ -320,5 +377,8 @@ check('CSV 全量匹配 24 局', o.csvPlanCount === 24 && o.csvPlanSkip === 0 &&
 check('反推：主分=录入值', JSON.stringify(o.adjPoints) === JSON.stringify([30000,20000,10000,0]), o.adjPoints);
 check('反推：小分=录入值−名次修正', JSON.stringify(o.adjRaws) === JSON.stringify([29950,19990,10010,30]), o.adjRaws);
 check('反推：排名与总分一致', o.adjTopPid === o.adjSeat0Pid && o.adjTopRaw === 29950, [o.adjTopPid, o.adjSeat0Pid, o.adjTopRaw]);
+check('名次分按每局累加', JSON.stringify(o.handPoints) === JSON.stringify([15, 0, 0, 5]), o.handPoints);
+check('阶段积分叠加为总分', o.stageSum === 20 && o.stageNote.indexOf('+') > 0, [o.stageSum, o.stageNote]);
+check('阶段积分单独计算不计入总分', o.stageNoStack === 10, o.stageNoStack);
 console.log(fails ? ('\n失败 ' + fails + ' 项') : '\n全部通过');
 process.exit(fails ? 1 : 0);
