@@ -335,9 +335,10 @@ function stageConfigView(t, st){
        + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
     h += '<div class="field"><label>名次分表 · 3 人桌</label>'
        + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
-    h += '<div class="field"><label>名次分粒度</label>'
-       + segHtml('rb', [['ROUND', '每轮（按本轮总分排名）'], ['HAND', '每局（每个半庄分别排名）']], st.scoring.rankBasis || 'ROUND', 'stSetRankBasis')
-       + '</div><div class="tiny" style="margin:-6px 0 8px">「每局」= 每个半庄按顺位各给一次名次分，累加；「每轮」= 几个半庄总分排名后只给一次。</div>';
+    h += '<div class="field"><label>名次分来源（可同时启用）</label>'
+       + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisRound ? 'checked' : '') + ' onchange="stSetRankBasisRound(this.checked)">每轮：按本轮总分排名给一次</label>'
+       + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisHand ? 'checked' : '') + ' onchange="stSetRankBasisHand(this.checked)">每局：每个半庄分别排名各给一次</label>'
+       + '</div><div class="tiny" style="margin:-6px 0 8px">两个都勾 = 两笔名次分相加。排名分制与纯分数+修正都按这个规则。</div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
     if (st.scoring.mode === 'PURE'){
       if ((st.scoring.entryMode || 'RAW') === 'RAW'){
@@ -347,7 +348,11 @@ function stageConfigView(t, st){
          + segHtml('em', [['RAW', '原始点数'], ['ADJUSTED', '含名次修正的点数']], st.scoring.entryMode || 'RAW', 'stSetEntryMode')
          + '</div><div class="tiny" style="margin:-6px 0 8px">选「含名次修正」时：录入框里填已经加过名次修正的点数，系统用「录入值 − 名次修正」反推出原始点数，作为破同分的小分。</div>';
     }
-    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">同桌并列 TOP 加分（' + st.scoring.topBonus.values.join(' / ') + '）</label>';
+    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">每轮 TOP 加分</label>';
+    if (st.scoring.topBonus.on){
+      h += '<div class="field"><label>TOP 加分（按同桌并列第一名人数，逗号分隔：1人/2人/3人/4人）</label>'
+         + '<input class="input" value="' + st.scoring.topBonus.values.join(',') + '" onchange="stSetTopBonusValues(this.value)"></div>';
+    }
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.water.on ? 'checked' : '') + ' onchange="stSetWaterOn(this.checked)">水上 / 水下修正</label>';
     if (st.scoring.water.on){
       h += '<div class="field-row">'
@@ -365,8 +370,13 @@ function stageConfigView(t, st){
     h += '<div class="field"><label>每桌晋级人数</label>' + segHtml('k', [[1, '1 人'], [2, '2 人']], st.elim.perTable, 'stSetPerTable') + '</div>';
     h += '<div class="field"><label>每局计分（同积分赛）</label><div class="dim">按本轮总分排名结算晋级；另可开分数继承 ↓</div></div>';
     h += '<div class="field"><label>名次分表 · 4 人桌</label><input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
+    h += '<div class="field"><label>名次分表 · 3 人桌</label><input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
-    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">同桌并列 TOP 加分</label>';
+    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">每轮 TOP 加分</label>';
+    if (st.scoring.topBonus.on){
+      h += '<div class="field"><label>TOP 加分（1人/2人/3人/4人并列）</label>'
+         + '<input class="input" value="' + st.scoring.topBonus.values.join(',') + '" onchange="stSetTopBonusValues(this.value)"></div>';
+    }
     h += '<label class="check"><input type="checkbox" ' + (st.elim.carry ? 'checked' : '') + ' onchange="stSetElimCarry(this.checked)">轮与轮之间继承分数（不清零）</label>';
     if (st.format === 'DOUBLE'){
       h += '<div class="field"><label>初始直接进败者组的人数（按上阶段名次从末位取）</label><input class="input" type="number" min="0" value="' + (num(st.elim.initialLosers) || 0) + '" onchange="stSetElimInitLosers(this.value)"></div>';
@@ -494,7 +504,8 @@ function stToggleChain(k){
 function stSetScoring(key, v){ var st = curStage(); st.scoring[key] = v; save(); render(); }
 function stSetEntryMode(v){ var st = curStage(); st.scoring.entryMode = v; save(); render(); }
 function stSetScoringNum(key, v){ var st = curStage(); st.scoring[key] = num(v); save(); render(); }
-function stSetRankBasis(v){ var st = curStage(); st.scoring.rankBasis = v; save(); render(); }
+function stSetRankBasisRound(on){ var st = curStage(); st.scoring.rankBasisRound = !!on; save(); render(); }
+function stSetRankBasisHand(on){ var st = curStage(); st.scoring.rankBasisHand = !!on; save(); render(); }
 
 /* ---------- 阶段积分 ---------- */
 function stSetPointsOn(on){ var st = curStage(); st.points.on = !!on; save(); render(); }
@@ -556,6 +567,12 @@ function stSetRankTable(n, v){
   save(); render();
 }
 function stSetTopBonus(on){ var st = curStage(); st.scoring.topBonus.on = !!on; save(); render(); }
+function stSetTopBonusValues(v){
+  var st = curStage();
+  var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
+  if (arr.length) st.scoring.topBonus.values = arr;
+  save(); render();
+}
 function stSetWaterOn(on){ var st = curStage(); st.scoring.water.on = !!on; save(); render(); }
 function stSetWater(k, v){ var st = curStage(); st.scoring.water[k] = num(v); save(); render(); }
 function stSetElimCarry(on){ var st = curStage(); st.elim.carry = !!on; save(); render(); }

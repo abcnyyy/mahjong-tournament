@@ -286,7 +286,8 @@ const testSrc = String.raw`
   var sha = newStage('POINTS', '每局');
   sha.halvesPerRound = 2; sha.roundCount = 1;
   sha.scoring.mode = 'RANK_POINT';
-  sha.scoring.rankBasis = 'HAND';
+  sha.scoring.rankBasisRound = false;
+  sha.scoring.rankBasisHand = true;
   sha.scoring.rankTable['4'] = [10, 5, 0, -5];
   sha.entrants = ta.players.map(function(p){ return p.id; });
   ta.stages.push(sha);
@@ -301,6 +302,17 @@ const testSrc = String.raw`
     var r = rows13.filter(function(x){ return x.pid === s.pid; })[0];
     return r ? r.point : null;
   });
+  /* 共存：每轮 + 每局 同时启用，再叠加可自定义的 TOP 加分 */
+  sha.scoring.rankBasisRound = true;
+  rows13 = stageRanking(ta, sha);
+  out.bothPoints = seats13.map(function(s){
+    var r = rows13.filter(function(x){ return x.pid === s.pid; })[0];
+    return r ? r.point : null;
+  });
+  sha.scoring.topBonus.on = true;
+  sha.scoring.topBonus.values = [20, 10, 5, 0];
+  rows13 = stageRanking(ta, sha);
+  out.topBonusPoint = rows13.filter(function(x){ return x.pid === seats13[0].pid; })[0].point;
 
   /* ===== 场景14：阶段积分叠加 / 单独计算 ===== */
   var tb1 = newTournament('阶段积分', 'se1');
@@ -378,6 +390,8 @@ check('反推：主分=录入值', JSON.stringify(o.adjPoints) === JSON.stringif
 check('反推：小分=录入值−名次修正', JSON.stringify(o.adjRaws) === JSON.stringify([29950,19990,10010,30]), o.adjRaws);
 check('反推：排名与总分一致', o.adjTopPid === o.adjSeat0Pid && o.adjTopRaw === 29950, [o.adjTopPid, o.adjSeat0Pid, o.adjTopRaw]);
 check('名次分按每局累加', JSON.stringify(o.handPoints) === JSON.stringify([15, 0, 0, 5]), o.handPoints);
+check('每轮+每局共存相加', JSON.stringify(o.bothPoints) === JSON.stringify([25, -2.5, -2.5, 10]), o.bothPoints);
+check('TOP 加分可自定义', o.topBonusPoint === 45, o.topBonusPoint);
 check('阶段积分叠加为总分', o.stageSum === 20 && o.stageNote.indexOf('+') > 0, [o.stageSum, o.stageNote]);
 check('阶段积分单独计算不计入总分', o.stageNoStack === 10, o.stageNoStack);
 console.log(fails ? ('\n失败 ' + fails + ' 项') : '\n全部通过');

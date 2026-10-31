@@ -68,10 +68,11 @@ function newStage(format, name){
     scoring: {
       mode: 'RANK_POINT',                // RANK_POINT 排名分 | PURE 纯分数+修正
       rankSource: 'TABLE',               // TABLE 桌内 | GLOBAL 全场
-      rankBasis: 'ROUND',                // ROUND 名次分按每轮 | HAND 名次分按每局
+      rankBasisRound: true,              // 名次分：按每轮（可按总分排名给一次）
+      rankBasisHand: false,              // 名次分：按每局（每个半庄各给一次），可与上一项共存
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
       tieSplit: true,                    // 并列顺位平分名次分
-      topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 同桌并列 top 加分
+      topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 每轮 TOP 加分（并列人数→加分）
       water: { on: false, threshold: 0, plus: 0, minus: 0 }, // 水上/水下修正
       entryMode: 'RAW',                   // RAW 录原始点数 | ADJUSTED 录含名次修正的点数（反推小分）
       byePoint: 0,                        // 轮空得分
@@ -196,7 +197,13 @@ function normalizeStage(st){
   var sc = st.scoring = st.scoring || {};
   sc.mode = sc.mode === 'PURE' ? 'PURE' : 'RANK_POINT';
   sc.rankSource = sc.rankSource === 'GLOBAL' ? 'GLOBAL' : 'TABLE';
-  sc.rankBasis = sc.rankBasis === 'HAND' ? 'HAND' : 'ROUND';
+  /* 兼容旧字段 rankBasis：ROUND/HAND → 两个可共存的开关 */
+  if (sc.rankBasisRound === undefined && sc.rankBasisHand === undefined){
+    sc.rankBasisRound = sc.rankBasis !== 'HAND';
+    sc.rankBasisHand = sc.rankBasis === 'HAND';
+  }
+  sc.rankBasisRound = sc.rankBasisRound !== false;
+  sc.rankBasisHand = sc.rankBasisHand === true;
   if (!sc.rankTable || typeof sc.rankTable !== 'object') sc.rankTable = { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] };
   ['4', '3', '2'].forEach(function(k){
     var arr = sc.rankTable[k];

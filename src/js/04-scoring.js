@@ -68,9 +68,9 @@ function calcRound(st, r){
     var totals = roundTableTotals(tb, halves);
     var table = tableOfSize(cfg, totals.length);
     var pts = rankPointsWithTie(totals, table, cfg.tieSplit);
-    /* 名次分粒度：每轮（按本轮总分排名）或每局（每个半庄各自排名后累加） */
+    /* 名次分：每轮 / 每局 两个开关可同时启用，分别累加 */
     var handPts = {};
-    if (cfg.rankBasis === 'HAND' && halves > 1){
+    if (cfg.rankBasisHand){
       for (var hh = 0; hh < halves; hh++){
         var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]) }; });
         var hp = rankPointsWithTie(hTotals, table, cfg.tieSplit);
@@ -83,7 +83,9 @@ function calcRound(st, r){
     var rows = tb.seats.map(function(s){
       var tot = totals.filter(function(x){ return x.pid === s.pid; })[0] || { total: 0, raw: 0 };
       var rank = s.manualRank ? num(s.manualRank) : (ranks[s.pid] || totals.length);
-      var rankPoint = cfg.rankBasis === 'HAND' ? (handPts[s.pid] || 0) : num(pts[s.pid]);
+      var rankPointRound = cfg.rankBasisRound ? num(pts[s.pid]) : 0;
+      var rankPointHand = cfg.rankBasisHand ? (handPts[s.pid] || 0) : 0;
+      var rankPoint = rankPointRound + rankPointHand;
       /* 水上/水下修正 */
       var water = 0;
       if (cfg.water && cfg.water.on){
@@ -108,7 +110,8 @@ function calcRound(st, r){
         roundPoint = tot.total + (cfg.useRankTable === false ? 0 : rankPoint) + topBonus + water;
       }
       return {
-        pid: s.pid, rank: rank, rankPoint: rankPoint, total: tot.total, raw: rawValue,
+        pid: s.pid, rank: rank, rankPoint: rankPoint, rankPointRound: rankPointRound, rankPointHand: rankPointHand,
+        total: tot.total, raw: rawValue,
         topBonus: topBonus, water: water, point: roundPoint, bonus: num(s.bonus), penalty: num(s.penalty)
       };
     });

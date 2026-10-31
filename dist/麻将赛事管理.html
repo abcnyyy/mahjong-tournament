@@ -568,10 +568,11 @@ function newStage(format, name){
     scoring: {
       mode: 'RANK_POINT',                // RANK_POINT 排名分 | PURE 纯分数+修正
       rankSource: 'TABLE',               // TABLE 桌内 | GLOBAL 全场
-      rankBasis: 'ROUND',                // ROUND 名次分按每轮 | HAND 名次分按每局
+      rankBasisRound: true,              // 名次分：按每轮（可按总分排名给一次）
+      rankBasisHand: false,              // 名次分：按每局（每个半庄各给一次），可与上一项共存
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
       tieSplit: true,                    // 并列顺位平分名次分
-      topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 同桌并列 top 加分
+      topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 每轮 TOP 加分（并列人数→加分）
       water: { on: false, threshold: 0, plus: 0, minus: 0 }, // 水上/水下修正
       entryMode: 'RAW',                   // RAW 录原始点数 | ADJUSTED 录含名次修正的点数（反推小分）
       byePoint: 0,                        // 轮空得分
@@ -696,7 +697,13 @@ function normalizeStage(st){
   var sc = st.scoring = st.scoring || {};
   sc.mode = sc.mode === 'PURE' ? 'PURE' : 'RANK_POINT';
   sc.rankSource = sc.rankSource === 'GLOBAL' ? 'GLOBAL' : 'TABLE';
-  sc.rankBasis = sc.rankBasis === 'HAND' ? 'HAND' : 'ROUND';
+  /* 兼容旧字段 rankBasis：ROUND/HAND → 两个可共存的开关 */
+  if (sc.rankBasisRound === undefined && sc.rankBasisHand === undefined){
+    sc.rankBasisRound = sc.rankBasis !== 'HAND';
+    sc.rankBasisHand = sc.rankBasis === 'HAND';
+  }
+  sc.rankBasisRound = sc.rankBasisRound !== false;
+  sc.rankBasisHand = sc.rankBasisHand === true;
   if (!sc.rankTable || typeof sc.rankTable !== 'object') sc.rankTable = { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] };
   ['4', '3', '2'].forEach(function(k){
     var arr = sc.rankTable[k];
@@ -1297,9 +1304,9 @@ function calcRound(st, r){
     var totals = roundTableTotals(tb, halves);
     var table = tableOfSize(cfg, totals.length);
     var pts = rankPointsWithTie(totals, table, cfg.tieSplit);
-    /* 名次分粒度：每轮（按本轮总分排名）或每局（每个半庄各自排名后累加） */
+    /* 名次分：每轮 / 每局 两个开关可同时启用，分别累加 */
     var handPts = {};
-    if (cfg.rankBasis === 'HAND' && halves > 1){
+    if (cfg.rankBasisHand){
       for (var hh = 0; hh < halves; hh++){
         var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]) }; });
         var hp = rankPointsWithTie(hTotals, table, cfg.tieSplit);
@@ -1312,7 +1319,9 @@ function calcRound(st, r){
     var rows = tb.seats.map(function(s){
       var tot = totals.filter(function(x){ return x.pid === s.pid; })[0] || { total: 0, raw: 0 };
       var rank = s.manualRank ? num(s.manualRank) : (ranks[s.pid] || totals.length);
-      var rankPoint = cfg.rankBasis === 'HAND' ? (handPts[s.pid] || 0) : num(pts[s.pid]);
+      var rankPointRound = cfg.rankBasisRound ? num(pts[s.pid]) : 0;
+      var rankPointHand = cfg.rankBasisHand ? (handPts[s.pid] || 0) : 0;
+      var rankPoint = rankPointRound + rankPointHand;
       /* 水上/水下修正 */
       var water = 0;
       if (cfg.water && cfg.water.on){
@@ -1337,7 +1346,8 @@ function calcRound(st, r){
         roundPoint = tot.total + (cfg.useRankTable === false ? 0 : rankPoint) + topBonus + water;
       }
       return {
-        pid: s.pid, rank: rank, rankPoint: rankPoint, total: tot.total, raw: rawValue,
+        pid: s.pid, rank: rank, rankPoint: rankPoint, rankPointRound: rankPointRound, rankPointHand: rankPointHand,
+        total: tot.total, raw: rawValue,
         topBonus: topBonus, water: water, point: roundPoint, bonus: num(s.bonus), penalty: num(s.penalty)
       };
     });
@@ -2667,9 +2677,10 @@ function stageConfigView(t, st){
        + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
     h += '<div class="field"><label>名次分表 · 3 人桌</label>'
        + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
-    h += '<div class="field"><label>名次分粒度</label>'
-       + segHtml('rb', [['ROUND', '每轮（按本轮总分排名）'], ['HAND', '每局（每个半庄分别排名）']], st.scoring.rankBasis || 'ROUND', 'stSetRankBasis')
-       + '</div><div class="tiny" style="margin:-6px 0 8px">「每局」= 每个半庄按顺位各给一次名次分，累加；「每轮」= 几个半庄总分排名后只给一次。</div>';
+    h += '<div class="field"><label>名次分来源（可同时启用）</label>'
+       + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisRound ? 'checked' : '') + ' onchange="stSetRankBasisRound(this.checked)">每轮：按本轮总分排名给一次</label>'
+       + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisHand ? 'checked' : '') + ' onchange="stSetRankBasisHand(this.checked)">每局：每个半庄分别排名各给一次</label>'
+       + '</div><div class="tiny" style="margin:-6px 0 8px">两个都勾 = 两笔名次分相加。排名分制与纯分数+修正都按这个规则。</div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
     if (st.scoring.mode === 'PURE'){
       if ((st.scoring.entryMode || 'RAW') === 'RAW'){
@@ -2679,7 +2690,11 @@ function stageConfigView(t, st){
          + segHtml('em', [['RAW', '原始点数'], ['ADJUSTED', '含名次修正的点数']], st.scoring.entryMode || 'RAW', 'stSetEntryMode')
          + '</div><div class="tiny" style="margin:-6px 0 8px">选「含名次修正」时：录入框里填已经加过名次修正的点数，系统用「录入值 − 名次修正」反推出原始点数，作为破同分的小分。</div>';
     }
-    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">同桌并列 TOP 加分（' + st.scoring.topBonus.values.join(' / ') + '）</label>';
+    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">每轮 TOP 加分</label>';
+    if (st.scoring.topBonus.on){
+      h += '<div class="field"><label>TOP 加分（按同桌并列第一名人数，逗号分隔：1人/2人/3人/4人）</label>'
+         + '<input class="input" value="' + st.scoring.topBonus.values.join(',') + '" onchange="stSetTopBonusValues(this.value)"></div>';
+    }
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.water.on ? 'checked' : '') + ' onchange="stSetWaterOn(this.checked)">水上 / 水下修正</label>';
     if (st.scoring.water.on){
       h += '<div class="field-row">'
@@ -2697,8 +2712,13 @@ function stageConfigView(t, st){
     h += '<div class="field"><label>每桌晋级人数</label>' + segHtml('k', [[1, '1 人'], [2, '2 人']], st.elim.perTable, 'stSetPerTable') + '</div>';
     h += '<div class="field"><label>每局计分（同积分赛）</label><div class="dim">按本轮总分排名结算晋级；另可开分数继承 ↓</div></div>';
     h += '<div class="field"><label>名次分表 · 4 人桌</label><input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
+    h += '<div class="field"><label>名次分表 · 3 人桌</label><input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
-    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">同桌并列 TOP 加分</label>';
+    h += '<label class="check"><input type="checkbox" ' + (st.scoring.topBonus.on ? 'checked' : '') + ' onchange="stSetTopBonus(this.checked)">每轮 TOP 加分</label>';
+    if (st.scoring.topBonus.on){
+      h += '<div class="field"><label>TOP 加分（1人/2人/3人/4人并列）</label>'
+         + '<input class="input" value="' + st.scoring.topBonus.values.join(',') + '" onchange="stSetTopBonusValues(this.value)"></div>';
+    }
     h += '<label class="check"><input type="checkbox" ' + (st.elim.carry ? 'checked' : '') + ' onchange="stSetElimCarry(this.checked)">轮与轮之间继承分数（不清零）</label>';
     if (st.format === 'DOUBLE'){
       h += '<div class="field"><label>初始直接进败者组的人数（按上阶段名次从末位取）</label><input class="input" type="number" min="0" value="' + (num(st.elim.initialLosers) || 0) + '" onchange="stSetElimInitLosers(this.value)"></div>';
@@ -2826,7 +2846,8 @@ function stToggleChain(k){
 function stSetScoring(key, v){ var st = curStage(); st.scoring[key] = v; save(); render(); }
 function stSetEntryMode(v){ var st = curStage(); st.scoring.entryMode = v; save(); render(); }
 function stSetScoringNum(key, v){ var st = curStage(); st.scoring[key] = num(v); save(); render(); }
-function stSetRankBasis(v){ var st = curStage(); st.scoring.rankBasis = v; save(); render(); }
+function stSetRankBasisRound(on){ var st = curStage(); st.scoring.rankBasisRound = !!on; save(); render(); }
+function stSetRankBasisHand(on){ var st = curStage(); st.scoring.rankBasisHand = !!on; save(); render(); }
 
 /* ---------- 阶段积分 ---------- */
 function stSetPointsOn(on){ var st = curStage(); st.points.on = !!on; save(); render(); }
@@ -2888,6 +2909,12 @@ function stSetRankTable(n, v){
   save(); render();
 }
 function stSetTopBonus(on){ var st = curStage(); st.scoring.topBonus.on = !!on; save(); render(); }
+function stSetTopBonusValues(v){
+  var st = curStage();
+  var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
+  if (arr.length) st.scoring.topBonus.values = arr;
+  save(); render();
+}
 function stSetWaterOn(on){ var st = curStage(); st.scoring.water.on = !!on; save(); render(); }
 function stSetWater(k, v){ var st = curStage(); st.scoring.water[k] = num(v); save(); render(); }
 function stSetElimCarry(on){ var st = curStage(); st.elim.carry = !!on; save(); render(); }
