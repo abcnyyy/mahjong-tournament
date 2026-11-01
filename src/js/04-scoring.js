@@ -48,16 +48,45 @@ function rankPointsWithTie(totals, table, tieSplit){
   }
   return out;
 }
-function tableOfSize(cfg, n){
+function clampTable(t, idx){
+  if (!t || !t.length) return 0;
+  return num(t[Math.min(idx, t.length - 1)]);
+}
+/* 按人数与正负分取名次分表：sign = 'neg' 用负分表，否则正分表 */
+function rankTableFor(cfg, n, sign){
+  var src = (sign === 'neg' && cfg.rankTableNeg) ? cfg.rankTableNeg : cfg.rankTable;
   var key = String(n);
-  var t = cfg.rankTable[key];
+  var t = src[key];
   if (Array.isArray(t) && t.length) return t;
-  /* 找不到就按 4 人桌表 + 人数裁切 */
-  var base = cfg.rankTable['4'] || [50, 10, -10, -30];
+  var base = src['4'] || [50, 10, -10, -30];
   if (n < 4) return base.slice(0, n);
   var ext = base.slice();
   while (ext.length < n) ext.push(ext[ext.length - 1]);
   return ext;
+}
+function tableOfSize(cfg, n){ return rankTableFor(cfg, n, 'pos'); }
+/* 名次分：每个选手按自己的原始点数正负选择正/负分表；并列时平分档位 */
+function rankPointsBySign(entries, cfg, isNeg){
+  var sorted = entries.slice().sort(function(a, b){ return b.total - a.total; });
+  var out = {}, i = 0;
+  while (i < sorted.length){
+    var j = i;
+    while (j + 1 < sorted.length && sorted[j + 1].total === sorted[i].total) j++;
+    var cnt = j - i + 1;
+    for (var q = i; q <= j; q++){
+      var e = sorted[q];
+      var table = rankTableFor(cfg, sorted.length, isNeg(e) ? 'neg' : 'pos');
+      if (cfg.tieSplit && cnt > 1){
+        var s = 0;
+        for (var k = i; k <= j; k++) s += clampTable(table, k);
+        out[e.pid] = s / cnt;
+      } else {
+        out[e.pid] = clampTable(table, i);
+      }
+    }
+    i = j + 1;
+  }
+  return out;
 }
 
 /* ---------- 单轮计算（写回 _calc，不持久化成依赖） ---------- */
@@ -66,14 +95,13 @@ function calcRound(st, r){
   var perTable = [];
   r.tables.forEach(function(tb){
     var totals = roundTableTotals(tb, halves);
-    var table = tableOfSize(cfg, totals.length);
-    var pts = rankPointsWithTie(totals, table, cfg.tieSplit);
+    var pts = rankPointsBySign(totals, cfg, function(e){ return num(e.raw) < 0; });
     /* 名次分：每轮 / 每局 两个开关可同时启用，分别累加 */
     var handPts = {};
     if (cfg.rankBasisHand){
       for (var hh = 0; hh < halves; hh++){
-        var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]) }; });
-        var hp = rankPointsWithTie(hTotals, table, cfg.tieSplit);
+        var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]), raw: num(s.scores[hh]) }; });
+        var hp = rankPointsBySign(hTotals, cfg, function(e){ return num(e.raw) < 0; });
         Object.keys(hp).forEach(function(pid){ handPts[pid] = (handPts[pid] || 0) + hp[pid]; });
       }
     }

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const files = ['01-util.js','02-model.js','03-pairing.js','04-scoring.js','05-elim.js','06-season.js','12-ui-entry.js','15-io.js'];
+const files = ['01-util.js','02-model.js','03-pairing.js','04-scoring.js','05-elim.js','06-season.js','11-ui-tournament.js','12-ui-entry.js','15-io.js'];
 
 // 内联的雀魂牌谱样例（4 位虚构选手、2 局），与真实牌谱同格式
 const HEADER = '开始时间,结束时间,是否被移除,' +
@@ -382,6 +382,51 @@ const testSrc = String.raw`
   out.threeHalvesPoint = m10.point;
   out.threeHalvesRaw = m10.raw;
 
+  /* ===== 场景16：名次分按正分/负分分表 ===== */
+  var t11 = newTournament('正负分表', 'se1');
+  for (var s16 = 1; s16 <= 4; s16++) t11.players.push(newPlayer('Z' + s16));
+  DB.tournaments.push(t11);
+  var st16 = newStage('POINTS', '正负');
+  st16.halvesPerRound = 1; st16.roundCount = 1;
+  st16.scoring.rankBasisRound = true; st16.scoring.rankBasisHand = false;
+  st16.scoring.rankTable['4'] = [10, 5, 0, -5];
+  st16.scoring.rankTableNeg['4'] = [1, 0, -1, -2];
+  st16.entrants = t11.players.map(function(p){ return p.id; });
+  t11.stages.push(st16);
+  ensureEntrants(t11, st16);
+  var r16 = startPointsRound(t11, st16);
+  var seats16 = r16.tables[0].seats;
+  var vals16 = [30, -10, 5, -25];
+  seats16.forEach(function(s, si){ s.scores[0] = vals16[si]; });
+  r16.status = 'confirmed';
+  var rows16 = stageRanking(t11, st16);
+  out.signPoints = seats16.map(function(s){
+    var x = rows16.filter(function(y){ return y.pid === s.pid; })[0];
+    return x ? x.point : null;
+  });
+
+  /* ===== 场景17：批量删除选手数据 ===== */
+  var t12 = newTournament('批量删', 'se1');
+  for (var s17 = 1; s17 <= 6; s17++) t12.players.push(newPlayer('D' + s17));
+  DB.tournaments.push(t12);
+  var st17 = newStage('POINTS', '删'); st17.halvesPerRound = 1;
+  t12.stages.push(st17);
+  ensureEntrants(t12, st17);
+  var r17 = startPointsRound(t12, st17);
+  var delIds = [t12.players[0].id, t12.players[1].id];
+  delIds.forEach(function(pid){ removePlayerData(t12, pid); });
+  var seatedLeft = 0;
+  r17.tables.forEach(function(tb){
+    tb.seats.forEach(function(s){ seatedLeft += 1; });
+  });
+  out.afterDelPlayers = t12.players.length;
+  out.afterDelSeats = seatedLeft;
+  out.afterDelHasDeleted = t12.players.some(function(p){ return delIds.indexOf(p.id) >= 0; });
+  var refs = 0;
+  r17.tables.forEach(function(tb){ tb.seats.forEach(function(s){ if (delIds.indexOf(s.pid) >= 0) refs++; }); });
+  (r17.byes || []).forEach(function(pid){ if (delIds.indexOf(pid) >= 0) refs++; });
+  out.afterDelRefs = refs;
+
   return JSON.stringify(out);
 })()
 `;
@@ -430,5 +475,9 @@ check('阶段积分叠加为总分', o.stageSum === 20 && o.stageNote.indexOf('+
 check('阶段积分单独计算不计入总分', o.stageNoStack === 10, o.stageNoStack);
 check('每轮 3 局名次分累加', o.threeHalvesPoint === 80, o.threeHalvesPoint);
 check('轮修正不影响小分', o.threeHalvesRaw === 1200, o.threeHalvesRaw);
+check('正负分名次分表区分', JSON.stringify(o.signPoints) === JSON.stringify([10, -1, 5, -2]), o.signPoints);
+check('批量删除：选手减少', o.afterDelPlayers === 4, o.afterDelPlayers);
+check('批量删除：座位同步清理', o.afterDelRefs === 0 && o.afterDelHasDeleted === false,
+  [o.afterDelRefs, o.afterDelHasDeleted]);
 console.log(fails ? ('\n失败 ' + fails + ' 项') : '\n全部通过');
 process.exit(fails ? 1 : 0);

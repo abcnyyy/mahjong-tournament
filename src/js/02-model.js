@@ -71,6 +71,7 @@ function newStage(format, name){
       rankBasisRound: true,              // 名次分：按每轮（可按总分排名给一次）
       rankBasisHand: false,              // 名次分：按每局（每个半庄各给一次），可与上一项共存
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
+      rankTableNeg: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] }, // 负分（水下）名次分表
       tieSplit: true,                    // 并列顺位平分名次分
       topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 每轮 TOP 加分（并列人数→加分）
       water: { on: false, threshold: 0, plus: 0, minus: 0 }, // 水上/水下修正
@@ -210,6 +211,13 @@ function normalizeStage(st){
     if (!Array.isArray(arr) || !arr.length){
       sc.rankTable[k] = k === '4' ? [50, 10, -10, -30] : (k === '3' ? [30, 0, -30] : [15, -15]);
     } else sc.rankTable[k] = arr.map(function(x){ return num(x); });
+  });
+  /* 负分（水下）名次分表：旧数据没配过就沿用正分表 */
+  if (!sc.rankTableNeg || typeof sc.rankTableNeg !== 'object') sc.rankTableNeg = deepClone(sc.rankTable);
+  ['4', '3', '2'].forEach(function(k){
+    var arr = sc.rankTableNeg[k];
+    if (!Array.isArray(arr) || !arr.length) sc.rankTableNeg[k] = sc.rankTable[k].slice();
+    else sc.rankTableNeg[k] = arr.map(function(x){ return num(x); });
   });
   sc.tieSplit = sc.tieSplit !== false;
   sc.topBonus = Object.assign({ on: false, values: [15, 7.5, 5, 0] }, sc.topBonus || {});

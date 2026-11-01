@@ -7,6 +7,8 @@
 
 支持多阶段多赛制、四种积分赛编排、排名分与纯分数两种计分、阶段与轮次分数继承、自定义破同分链、赛季积分、牌谱 CSV 导入与多种导出。
 
+> 📖 详细使用说明：[docs/使用说明.md](docs/使用说明.md)
+
 - 单文件网页：[dist/麻将赛事管理.html](dist/麻将赛事管理.html)
 - Windows 绿色版：[dist/exe/麻将赛事管理.exe](dist/exe/麻将赛事管理.exe)（本地构建产物，不进仓库）
 - Android：[dist/apk/麻将赛事管理.apk](dist/apk/麻将赛事管理.apk)

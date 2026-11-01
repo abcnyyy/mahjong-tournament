@@ -571,6 +571,7 @@ function newStage(format, name){
       rankBasisRound: true,              // 名次分：按每轮（可按总分排名给一次）
       rankBasisHand: false,              // 名次分：按每局（每个半庄各给一次），可与上一项共存
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
+      rankTableNeg: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] }, // 负分（水下）名次分表
       tieSplit: true,                    // 并列顺位平分名次分
       topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 每轮 TOP 加分（并列人数→加分）
       water: { on: false, threshold: 0, plus: 0, minus: 0 }, // 水上/水下修正
@@ -710,6 +711,13 @@ function normalizeStage(st){
     if (!Array.isArray(arr) || !arr.length){
       sc.rankTable[k] = k === '4' ? [50, 10, -10, -30] : (k === '3' ? [30, 0, -30] : [15, -15]);
     } else sc.rankTable[k] = arr.map(function(x){ return num(x); });
+  });
+  /* 负分（水下）名次分表：旧数据没配过就沿用正分表 */
+  if (!sc.rankTableNeg || typeof sc.rankTableNeg !== 'object') sc.rankTableNeg = deepClone(sc.rankTable);
+  ['4', '3', '2'].forEach(function(k){
+    var arr = sc.rankTableNeg[k];
+    if (!Array.isArray(arr) || !arr.length) sc.rankTableNeg[k] = sc.rankTable[k].slice();
+    else sc.rankTableNeg[k] = arr.map(function(x){ return num(x); });
   });
   sc.tieSplit = sc.tieSplit !== false;
   sc.topBonus = Object.assign({ on: false, values: [15, 7.5, 5, 0] }, sc.topBonus || {});
@@ -1284,16 +1292,45 @@ function rankPointsWithTie(totals, table, tieSplit){
   }
   return out;
 }
-function tableOfSize(cfg, n){
+function clampTable(t, idx){
+  if (!t || !t.length) return 0;
+  return num(t[Math.min(idx, t.length - 1)]);
+}
+/* 按人数与正负分取名次分表：sign = 'neg' 用负分表，否则正分表 */
+function rankTableFor(cfg, n, sign){
+  var src = (sign === 'neg' && cfg.rankTableNeg) ? cfg.rankTableNeg : cfg.rankTable;
   var key = String(n);
-  var t = cfg.rankTable[key];
+  var t = src[key];
   if (Array.isArray(t) && t.length) return t;
-  /* 找不到就按 4 人桌表 + 人数裁切 */
-  var base = cfg.rankTable['4'] || [50, 10, -10, -30];
+  var base = src['4'] || [50, 10, -10, -30];
   if (n < 4) return base.slice(0, n);
   var ext = base.slice();
   while (ext.length < n) ext.push(ext[ext.length - 1]);
   return ext;
+}
+function tableOfSize(cfg, n){ return rankTableFor(cfg, n, 'pos'); }
+/* 名次分：每个选手按自己的原始点数正负选择正/负分表；并列时平分档位 */
+function rankPointsBySign(entries, cfg, isNeg){
+  var sorted = entries.slice().sort(function(a, b){ return b.total - a.total; });
+  var out = {}, i = 0;
+  while (i < sorted.length){
+    var j = i;
+    while (j + 1 < sorted.length && sorted[j + 1].total === sorted[i].total) j++;
+    var cnt = j - i + 1;
+    for (var q = i; q <= j; q++){
+      var e = sorted[q];
+      var table = rankTableFor(cfg, sorted.length, isNeg(e) ? 'neg' : 'pos');
+      if (cfg.tieSplit && cnt > 1){
+        var s = 0;
+        for (var k = i; k <= j; k++) s += clampTable(table, k);
+        out[e.pid] = s / cnt;
+      } else {
+        out[e.pid] = clampTable(table, i);
+      }
+    }
+    i = j + 1;
+  }
+  return out;
 }
 
 /* ---------- 单轮计算（写回 _calc，不持久化成依赖） ---------- */
@@ -1302,14 +1339,13 @@ function calcRound(st, r){
   var perTable = [];
   r.tables.forEach(function(tb){
     var totals = roundTableTotals(tb, halves);
-    var table = tableOfSize(cfg, totals.length);
-    var pts = rankPointsWithTie(totals, table, cfg.tieSplit);
+    var pts = rankPointsBySign(totals, cfg, function(e){ return num(e.raw) < 0; });
     /* 名次分：每轮 / 每局 两个开关可同时启用，分别累加 */
     var handPts = {};
     if (cfg.rankBasisHand){
       for (var hh = 0; hh < halves; hh++){
-        var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]) }; });
-        var hp = rankPointsWithTie(hTotals, table, cfg.tieSplit);
+        var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]), raw: num(s.scores[hh]) }; });
+        var hp = rankPointsBySign(hTotals, cfg, function(e){ return num(e.raw) < 0; });
         Object.keys(hp).forEach(function(pid){ handPts[pid] = (handPts[pid] || 0) + hp[pid]; });
       }
     }
@@ -2392,14 +2428,19 @@ function playersView(t){
      + '<button class="btn sm ghost" onclick="importPlayersFromTournament()">从其他赛事导入</button>'
      + '<button class="btn sm ghost" onclick="importFromSeasonInvites()">从赛季直邀导入</button>'
      + '<button class="btn sm ghost" onclick="exportPlayerList()">导出名单</button>'
+     + '<button class="btn sm danger" id="batchDelBtn" onclick="batchDeletePlayers()" disabled>删除选中（0）</button>'
      + '</div>';
   if (!t.players.length){
     h += emptyHtml('👥', '还没有选手', '点「批量导入选手」，一行一个名字，或「UID 名字」的格式。');
   } else {
-    h += '<div class="scroll"><table class="grid"><thead><tr><th>#</th><th class="l">选手</th><th>UID</th><th>来源</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    h += '<div class="scroll"><table class="grid"><thead><tr>'
+       + '<th><input type="checkbox" id="selAllPlayers" onchange="toggleAllPlayers(this.checked)"></th>'
+       + '<th>#</th><th class="l">选手</th><th>UID</th><th>来源</th><th>状态</th><th>操作</th></tr></thead><tbody>';
     t.players.forEach(function(p, i){
       var cls = p.disqualified ? 'dq' : (p.withdrawn ? 'wd' : '');
-      h += '<tr class="' + cls + '"><td class="rk">' + (i + 1) + '</td>'
+      h += '<tr class="' + cls + '">'
+         + '<td><input type="checkbox" class="plsel" data-pid="' + p.id + '" onchange="updateBatchDelBtn()"></td>'
+         + '<td class="rk">' + (i + 1) + '</td>'
          + '<td class="nm">' + esc(p.name) + '</td>'
          + '<td>' + esc(p.uid || '—') + '</td>'
          + '<td>' + tagHtml(SOURCE_LABEL[p.source] || p.source, p.source === 'invite' ? 'gold' : '') + '</td>'
@@ -2518,20 +2559,51 @@ function togglePlayerDQ(pid){
     }, { danger: true, yesText: '取消资格' });
   } else { p.disqualified = false; save(); closeModal(); render(); }
 }
+function removePlayerData(t, pid){
+  t.players = t.players.filter(function(x){ return x.id !== pid; });
+  t.stages.forEach(function(st){
+    st.rounds.forEach(function(r){
+      r.tables.forEach(function(tb){ tb.seats = tb.seats.filter(function(s){ return s.pid !== pid; }); });
+      r.byes = r.byes.filter(function(x){ return x !== pid; });
+      r.adv = (r.adv || []).filter(function(x){ return x !== pid; });
+    });
+    if (st.ranking && Array.isArray(st.ranking.manual)) st.ranking.manual = st.ranking.manual.filter(function(x){ return x !== pid; });
+  });
+}
 function removePlayerFromTournament(pid){
   var t = curTournament(), p = getPlayer(t, pid);
   confirmBox('从赛事中删除「' + p.name + '」？已录入的成绩会一并删除。', function(){
-    t.players = t.players.filter(function(x){ return x.id !== pid; });
-    t.stages.forEach(function(st){
-      st.rounds.forEach(function(r){
-        r.tables.forEach(function(tb){ tb.seats = tb.seats.filter(function(s){ return s.pid !== pid; }); });
-        r.byes = r.byes.filter(function(x){ return x !== pid; });
-        r.adv = (r.adv || []).filter(function(x){ return x !== pid; });
-      });
-      if (st.ranking && Array.isArray(st.ranking.manual)) st.ranking.manual = st.ranking.manual.filter(function(x){ return x !== pid; });
-    });
+    removePlayerData(t, pid);
     save(); closeModal(); render();
   }, { danger: true, yesText: '删除' });
+}
+/* ---------- 批量删除选手 ---------- */
+function selectedPlayerIds(){
+  var out = [];
+  var boxes = document.querySelectorAll('.plsel');
+  for (var i = 0; i < boxes.length; i++) if (boxes[i].checked) out.push(boxes[i].getAttribute('data-pid'));
+  return out;
+}
+function updateBatchDelBtn(){
+  var n = selectedPlayerIds().length;
+  var btn = document.getElementById('batchDelBtn');
+  if (btn){ btn.disabled = n === 0; btn.textContent = '删除选中（' + n + '）'; }
+}
+function toggleAllPlayers(on){
+  var boxes = document.querySelectorAll('.plsel');
+  for (var i = 0; i < boxes.length; i++) boxes[i].checked = !!on;
+  updateBatchDelBtn();
+}
+function batchDeletePlayers(){
+  var t = curTournament();
+  var ids = selectedPlayerIds();
+  if (!ids.length){ toast('先勾选要删除的选手', 'err'); return; }
+  confirmBox('删除选中的 ' + ids.length + ' 位选手？他们在各阶段的成绩会一并删除。', function(){
+    ids.forEach(function(pid){ removePlayerData(t, pid); });
+    save(); closeModal();
+    toast('已删除 ' + ids.length + ' 位选手', 'ok');
+    render();
+  }, { danger: true, yesText: '删除 ' + ids.length + ' 人' });
 }
 
 function importFromSeasonInvites(){
@@ -2674,10 +2746,20 @@ function stageConfigView(t, st){
     h += '<div class="hr"></div><h3 style="margin-bottom:10px">计分</h3>';
     h += '<div class="field"><label>计分方式</label>' + segHtml('mode', [['RANK_POINT', '排名分制'], ['PURE', '纯分数 + 修正']], st.scoring.mode, 'stSetScoringMode') + '</div>';
     h += '<div class="field"><label>排名口径</label>' + segHtml('src', [['TABLE', '桌内排名'], ['GLOBAL', '全场排名']], st.scoring.rankSource, 'stSetRankSource') + '</div>';
-    h += '<div class="field"><label>名次分表 · 4 人桌（1 位 → 4 位，逗号分隔）</label>'
-       + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
-    h += '<div class="field"><label>名次分表 · 3 人桌</label>'
-       + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
+    h += '<div class="tiny" style="margin-bottom:4px;font-weight:600;color:var(--ink-2)">正分（水上）名次分表</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>4 人桌（1 位 → 4 位）</label>'
+       + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>'
+       + '<div class="field"><label>3 人桌</label>'
+       + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>'
+       + '</div>';
+    h += '<div class="tiny" style="margin-bottom:4px;font-weight:600;color:var(--ink-2)">负分（水下）名次分表</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>4 人桌（1 位 → 4 位）</label>'
+       + '<input class="input" value="' + st.scoring.rankTableNeg['4'].join(',') + '" onchange="stSetRankTableNeg(4,this.value)"></div>'
+       + '<div class="field"><label>3 人桌</label>'
+       + '<input class="input" value="' + st.scoring.rankTableNeg['3'].join(',') + '" onchange="stSetRankTableNeg(3,this.value)"></div>'
+       + '</div><div class="tiny" style="margin:-6px 0 8px">每个选手按自己「原始点数总和」的正负选表：≥0 用正分表，&lt;0 用负分表。</div>';
     h += '<div class="field"><label>名次分来源（可同时启用）</label>'
        + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisRound ? 'checked' : '') + ' onchange="stSetRankBasisRound(this.checked)">每轮：按本轮总分排名给一次</label>'
        + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisHand ? 'checked' : '') + ' onchange="stSetRankBasisHand(this.checked)">每局：每个半庄分别排名各给一次</label>'
@@ -2711,8 +2793,14 @@ function stageConfigView(t, st){
     h += '<div class="hr"></div><h3 style="margin-bottom:10px">淘汰赛</h3>';
     h += '<div class="field"><label>每桌晋级人数</label>' + segHtml('k', [[1, '1 人'], [2, '2 人']], st.elim.perTable, 'stSetPerTable') + '</div>';
     h += '<div class="field"><label>每局计分（同积分赛）</label><div class="dim">按本轮总分排名结算晋级；另可开分数继承 ↓</div></div>';
-    h += '<div class="field"><label>名次分表 · 4 人桌</label><input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>';
-    h += '<div class="field"><label>名次分表 · 3 人桌</label><input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>正分名次分 · 4 人桌</label><input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>'
+       + '<div class="field"><label>正分名次分 · 3 人桌</label><input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>'
+       + '</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>负分名次分 · 4 人桌</label><input class="input" value="' + st.scoring.rankTableNeg['4'].join(',') + '" onchange="stSetRankTableNeg(4,this.value)"></div>'
+       + '<div class="field"><label>负分名次分 · 3 人桌</label><input class="input" value="' + st.scoring.rankTableNeg['3'].join(',') + '" onchange="stSetRankTableNeg(3,this.value)"></div>'
+       + '</div>';
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
     if (st.scoring.topBonus && st.scoring.topBonus.on){
       h += '<div class="notice">旧版「TOP 加分」仍在生效（' + st.scoring.topBonus.values.join(' / ') + '），已并入名次分表。<button class="btn xs ghost" style="margin-left:6px" onclick="disableLegacyTopBonus()">停用</button></div>';
@@ -2904,6 +2992,14 @@ function stSetRankTable(n, v){
   var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
   if (!arr.length) return;
   st.scoring.rankTable[String(n)] = arr;
+  save(); render();
+}
+function stSetRankTableNeg(n, v){
+  var st = curStage();
+  var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
+  if (!arr.length) return;
+  st.scoring.rankTableNeg = st.scoring.rankTableNeg || {};
+  st.scoring.rankTableNeg[String(n)] = arr;
   save(); render();
 }
 function stSetTopBonus(on){ var st = curStage(); st.scoring.topBonus.on = !!on; save(); render(); }
