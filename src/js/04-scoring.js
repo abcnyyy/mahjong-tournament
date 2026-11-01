@@ -65,6 +65,12 @@ function rankTableFor(cfg, n, sign){
   return ext;
 }
 function tableOfSize(cfg, n){ return rankTableFor(cfg, n, 'pos'); }
+/* 按桌上正分人数 k 选表 */
+function rankTableByCount(cfg, n, k){
+  var list = (cfg.rankTableByCount || {})[String(n)];
+  if (Array.isArray(list) && Array.isArray(list[k]) && list[k].length) return list[k];
+  return rankTableFor(cfg, n, 'pos');
+}
 /* 名次分：每个选手按自己的原始点数正负选择正/负分表；并列时平分档位 */
 function rankPointsBySign(entries, cfg, isNeg){
   var sorted = entries.slice().sort(function(a, b){ return b.total - a.total; });
@@ -95,13 +101,25 @@ function calcRound(st, r){
   var perTable = [];
   r.tables.forEach(function(tb){
     var totals = roundTableTotals(tb, halves);
-    var pts = rankPointsBySign(totals, cfg, function(e){ return num(e.raw) < 0; });
+    var pts;
+    if (cfg.rankTableMode === 'POSCOUNT'){
+      var kPosRound = totals.filter(function(x){ return num(x.raw) >= 0; }).length;
+      pts = rankPointsWithTie(totals, rankTableByCount(cfg, totals.length, kPosRound), cfg.tieSplit);
+    } else {
+      pts = rankPointsBySign(totals, cfg, function(e){ return num(e.raw) < 0; });
+    }
     /* 名次分：每轮 / 每局 两个开关可同时启用，分别累加 */
     var handPts = {};
     if (cfg.rankBasisHand){
       for (var hh = 0; hh < halves; hh++){
         var hTotals = tb.seats.map(function(s){ return { pid: s.pid, total: num(s.scores[hh]), raw: num(s.scores[hh]) }; });
-        var hp = rankPointsBySign(hTotals, cfg, function(e){ return num(e.raw) < 0; });
+        var hp;
+        if (cfg.rankTableMode === 'POSCOUNT'){
+          var kPosHand = hTotals.filter(function(x){ return num(x.raw) >= 0; }).length;
+          hp = rankPointsWithTie(hTotals, rankTableByCount(cfg, hTotals.length, kPosHand), cfg.tieSplit);
+        } else {
+          hp = rankPointsBySign(hTotals, cfg, function(e){ return num(e.raw) < 0; });
+        }
         Object.keys(hp).forEach(function(pid){ handPts[pid] = (handPts[pid] || 0) + hp[pid]; });
       }
     }

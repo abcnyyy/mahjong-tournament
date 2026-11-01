@@ -328,7 +328,43 @@ function stageView(t, st){
 }
 function setStageTab(tab){ APP.tab = tab; render(); }
 
-/* ==================== 阶段配置 ==================== */
+/* 名次分表配置块（正负分表 / 按正分人数表） */
+function rankTablesConfigHtml(st){
+  var sc = st.scoring;
+  var h = '<div class="field"><label>名次分择表依据</label>'
+    + segHtml('rm', [['SIGN', '按个人正负分'], ['POSCOUNT', '按桌上正分人数']], sc.rankTableMode || 'SIGN', 'stSetRankTableMode')
+    + '</div>';
+  if ((sc.rankTableMode || 'SIGN') === 'POSCOUNT'){
+    h += '<div class="tiny" style="margin-bottom:4px">4 人桌：按桌上正分人数 k 选表</div><div class="field-row" style="grid-template-columns:repeat(2,1fr)">';
+    for (var k = 0; k <= 4; k++){
+      h += '<div class="field" style="margin-bottom:6px"><label>正分 ' + k + ' 人</label>'
+         + '<input class="input" value="' + ((sc.rankTableByCount['4'] || [])[k] || []).join(',') + '" onchange="stSetRankTableCount(4,' + k + ',this.value)"></div>';
+    }
+    h += '</div><div class="tiny" style="margin-bottom:4px">3 人桌：按桌上正分人数 k 选表</div><div class="field-row" style="grid-template-columns:repeat(2,1fr)">';
+    for (var k3 = 0; k3 <= 3; k3++){
+      h += '<div class="field" style="margin-bottom:6px"><label>正分 ' + k3 + ' 人</label>'
+         + '<input class="input" value="' + ((sc.rankTableByCount['3'] || [])[k3] || []).join(',') + '" onchange="stSetRankTableCount(3,' + k3 + ',this.value)"></div>';
+    }
+    h += '</div><div class="tiny" style="margin:-4px 0 8px">整桌用同一套表；正分人数按本桌原始点数 ≥ 0 的人数统计。</div>';
+  } else {
+    h += '<div class="tiny" style="margin-bottom:4px;font-weight:600;color:var(--ink-2)">正分（水上）名次分表</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>4 人桌（1 位 → 4 位）</label>'
+       + '<input class="input" value="' + sc.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>'
+       + '<div class="field"><label>3 人桌</label>'
+       + '<input class="input" value="' + sc.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>'
+       + '</div>';
+    h += '<div class="tiny" style="margin-bottom:4px;font-weight:600;color:var(--ink-2)">负分（水下）名次分表</div>';
+    h += '<div class="field-row">'
+       + '<div class="field"><label>4 人桌（1 位 → 4 位）</label>'
+       + '<input class="input" value="' + sc.rankTableNeg['4'].join(',') + '" onchange="stSetRankTableNeg(4,this.value)"></div>'
+       + '<div class="field"><label>3 人桌</label>'
+       + '<input class="input" value="' + sc.rankTableNeg['3'].join(',') + '" onchange="stSetRankTableNeg(3,this.value)"></div>'
+       + '</div><div class="tiny" style="margin:-6px 0 8px">每个选手按自己「原始点数总和」的正负选表：≥0 用正分表，&lt;0 用负分表。</div>';
+  }
+  return h;
+}
+
 var TIEBREAK_KEYS = ['RAW', 'SUM_RANK', 'AVG_RANK', 'AVG_ROUND_RANK', 'FIRST', 'SECOND', 'THIRD', 'LAST', 'FIRST_RATE', 'LAST_RATE', 'H2H', 'BYE', 'SEED', 'RANDOM'];
 function stageConfigView(t, st){
   var h = '';
@@ -367,20 +403,7 @@ function stageConfigView(t, st){
     h += '<div class="hr"></div><h3 style="margin-bottom:10px">计分</h3>';
     h += '<div class="field"><label>计分方式</label>' + segHtml('mode', [['RANK_POINT', '排名分制'], ['PURE', '纯分数 + 修正']], st.scoring.mode, 'stSetScoringMode') + '</div>';
     h += '<div class="field"><label>排名口径</label>' + segHtml('src', [['TABLE', '桌内排名'], ['GLOBAL', '全场排名']], st.scoring.rankSource, 'stSetRankSource') + '</div>';
-    h += '<div class="tiny" style="margin-bottom:4px;font-weight:600;color:var(--ink-2)">正分（水上）名次分表</div>';
-    h += '<div class="field-row">'
-       + '<div class="field"><label>4 人桌（1 位 → 4 位）</label>'
-       + '<input class="input" value="' + st.scoring.rankTable['4'].join(',') + '" onchange="stSetRankTable(4,this.value)"></div>'
-       + '<div class="field"><label>3 人桌</label>'
-       + '<input class="input" value="' + st.scoring.rankTable['3'].join(',') + '" onchange="stSetRankTable(3,this.value)"></div>'
-       + '</div>';
-    h += '<div class="tiny" style="margin-bottom:4px;font-weight:600;color:var(--ink-2)">负分（水下）名次分表</div>';
-    h += '<div class="field-row">'
-       + '<div class="field"><label>4 人桌（1 位 → 4 位）</label>'
-       + '<input class="input" value="' + st.scoring.rankTableNeg['4'].join(',') + '" onchange="stSetRankTableNeg(4,this.value)"></div>'
-       + '<div class="field"><label>3 人桌</label>'
-       + '<input class="input" value="' + st.scoring.rankTableNeg['3'].join(',') + '" onchange="stSetRankTableNeg(3,this.value)"></div>'
-       + '</div><div class="tiny" style="margin:-6px 0 8px">每个选手按自己「原始点数总和」的正负选表：≥0 用正分表，&lt;0 用负分表。</div>';
+    h += rankTablesConfigHtml(st);
     h += '<div class="field"><label>名次分来源（可同时启用）</label>'
        + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisRound ? 'checked' : '') + ' onchange="stSetRankBasisRound(this.checked)">每轮：按本轮总分排名给一次</label>'
        + '<label class="check"><input type="checkbox" ' + (st.scoring.rankBasisHand ? 'checked' : '') + ' onchange="stSetRankBasisHand(this.checked)">每局：每个半庄分别排名各给一次</label>'
@@ -422,6 +445,7 @@ function stageConfigView(t, st){
        + '<div class="field"><label>负分名次分 · 4 人桌</label><input class="input" value="' + st.scoring.rankTableNeg['4'].join(',') + '" onchange="stSetRankTableNeg(4,this.value)"></div>'
        + '<div class="field"><label>负分名次分 · 3 人桌</label><input class="input" value="' + st.scoring.rankTableNeg['3'].join(',') + '" onchange="stSetRankTableNeg(3,this.value)"></div>'
        + '</div>';
+    h += rankTablesConfigHtml(st);
     h += '<label class="check"><input type="checkbox" ' + (st.scoring.tieSplit ? 'checked' : '') + ' onchange="stSetScoring(\'tieSplit\',this.checked)">并列平分名次分</label>';
     if (st.scoring.topBonus && st.scoring.topBonus.on){
       h += '<div class="notice">旧版「TOP 加分」仍在生效（' + st.scoring.topBonus.values.join(' / ') + '），已并入名次分表。<button class="btn xs ghost" style="margin-left:6px" onclick="disableLegacyTopBonus()">停用</button></div>';
@@ -621,6 +645,16 @@ function stSetRankTableNeg(n, v){
   if (!arr.length) return;
   st.scoring.rankTableNeg = st.scoring.rankTableNeg || {};
   st.scoring.rankTableNeg[String(n)] = arr;
+  save(); render();
+}
+function stSetRankTableMode(v){ var st = curStage(); st.scoring.rankTableMode = v; save(); render(); }
+function stSetRankTableCount(n, k, v){
+  var st = curStage();
+  var arr = String(v).split(/[,，\s]+/).map(function(x){ return num(x); });
+  if (!arr.length) return;
+  if (!st.scoring.rankTableByCount) st.scoring.rankTableByCount = {};
+  if (!Array.isArray(st.scoring.rankTableByCount[String(n)])) st.scoring.rankTableByCount[String(n)] = [];
+  st.scoring.rankTableByCount[String(n)][k] = arr;
   save(); render();
 }
 function stSetTopBonus(on){ var st = curStage(); st.scoring.topBonus.on = !!on; save(); render(); }

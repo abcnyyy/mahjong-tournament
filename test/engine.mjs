@@ -427,6 +427,28 @@ const testSrc = String.raw`
   (r17.byes || []).forEach(function(pid){ if (delIds.indexOf(pid) >= 0) refs++; });
   out.afterDelRefs = refs;
 
+  /* ===== 场景18：按桌上正分人数选表 ===== */
+  var t13 = newTournament('人数选表', 'se1');
+  for (var s18 = 1; s18 <= 4; s18++) t13.players.push(newPlayer('K' + s18));
+  DB.tournaments.push(t13);
+  var st18 = newStage('POINTS', '人数');
+  st18.halvesPerRound = 1; st18.roundCount = 1;
+  st18.scoring.rankTableMode = 'POSCOUNT';
+  st18.scoring.rankTableByCount['4'] = [[1, 2, 3, 4], [10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33], [40, 41, 42, 43]];
+  st18.entrants = t13.players.map(function(p){ return p.id; });
+  t13.stages.push(st18);
+  ensureEntrants(t13, st18);
+  var r18 = startPointsRound(t13, st18);
+  var seats18 = r18.tables[0].seats;
+  var vals18 = [30, 10, -5, -20];
+  seats18.forEach(function(s, si){ s.scores[0] = vals18[si]; });
+  r18.status = 'confirmed';
+  var rows18 = stageRanking(t13, st18);
+  out.countPoints = seats18.map(function(s){
+    var x = rows18.filter(function(y){ return y.pid === s.pid; })[0];
+    return x ? x.point : null;
+  });
+
   return JSON.stringify(out);
 })()
 `;
@@ -479,5 +501,6 @@ check('正负分名次分表区分', JSON.stringify(o.signPoints) === JSON.strin
 check('批量删除：选手减少', o.afterDelPlayers === 4, o.afterDelPlayers);
 check('批量删除：座位同步清理', o.afterDelRefs === 0 && o.afterDelHasDeleted === false,
   [o.afterDelRefs, o.afterDelHasDeleted]);
+check('按正分人数选表', JSON.stringify(o.countPoints) === JSON.stringify([20, 21, 22, 23]), o.countPoints);
 console.log(fails ? ('\n失败 ' + fails + ' 项') : '\n全部通过');
 process.exit(fails ? 1 : 0);

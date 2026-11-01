@@ -72,6 +72,12 @@ function newStage(format, name){
       rankBasisHand: false,              // 名次分：按每局（每个半庄各给一次），可与上一项共存
       rankTable: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] },
       rankTableNeg: { '4': [50, 10, -10, -30], '3': [30, 0, -30], '2': [15, -15] }, // 负分（水下）名次分表
+      rankTableMode: 'SIGN',             // SIGN 按个人正负分 | POSCOUNT 按桌上正分人数
+      rankTableByCount: {                // 按桌上正分人数 k 选表（索引 = k）
+        '4': [[50, 10, -10, -30], [50, 10, -10, -30], [50, 10, -10, -30], [50, 10, -10, -30], [50, 10, -10, -30]],
+        '3': [[30, 0, -30], [30, 0, -30], [30, 0, -30], [30, 0, -30]],
+        '2': [[15, -15], [15, -15], [15, -15]]
+      },
       tieSplit: true,                    // 并列顺位平分名次分
       topBonus: { on: false, values: [15, 7.5, 5, 0] },   // 每轮 TOP 加分（并列人数→加分）
       water: { on: false, threshold: 0, plus: 0, minus: 0 }, // 水上/水下修正
@@ -218,6 +224,22 @@ function normalizeStage(st){
     var arr = sc.rankTableNeg[k];
     if (!Array.isArray(arr) || !arr.length) sc.rankTableNeg[k] = sc.rankTable[k].slice();
     else sc.rankTableNeg[k] = arr.map(function(x){ return num(x); });
+  });
+  /* 按桌上正分人数选表：索引 k = 正分人数，每项是一套完整名次分表 */
+  sc.rankTableMode = sc.rankTableMode === 'POSCOUNT' ? 'POSCOUNT' : 'SIGN';
+  if (!sc.rankTableByCount || typeof sc.rankTableByCount !== 'object') sc.rankTableByCount = {};
+  ['4', '3', '2'].forEach(function(nk){
+    var n = num(nk);
+    var def = sc.rankTable[nk];
+    var list = sc.rankTableByCount[nk];
+    if (!Array.isArray(list)) list = [];
+    for (var k = 0; k <= n; k++){
+      var arr2 = list[k];
+      if (!Array.isArray(arr2) || !arr2.length) list[k] = def.slice(0, n);
+      else list[k] = arr2.map(function(x){ return num(x); });
+    }
+    list.length = n + 1;
+    sc.rankTableByCount[nk] = list;
   });
   sc.tieSplit = sc.tieSplit !== false;
   sc.topBonus = Object.assign({ on: false, values: [15, 7.5, 5, 0] }, sc.topBonus || {});
